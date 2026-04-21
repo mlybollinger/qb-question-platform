@@ -1,0 +1,416 @@
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  // Clear in dependency order
+  await prisma.packetQuestion.deleteMany();
+  await prisma.packet.deleteMany();
+  await prisma.bonus.deleteMany();
+  await prisma.tossup.deleteMany();
+  await prisma.question.deleteMany();
+  await prisma.$executeRaw`ALTER SEQUENCE tossup_id_seq RESTART WITH 1`;
+  await prisma.$executeRaw`ALTER SEQUENCE question_id_seq RESTART WITH 1`;
+  await prisma.tournamentRoleAssignment.deleteMany();
+  await prisma.packetDistributionConstraints.deleteMany();
+  await prisma.tournament.deleteMany();
+  await prisma.categoryRelation.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.user.deleteMany();
+
+  // ── User ──────────────────────────────────────────────────────────────────
+  const user = await prisma.user.create({
+    data: {
+      firstName: 'Demo',
+      lastName: 'Writer',
+      username: 'demo',
+      email: 'demo@example.com',
+      passwordHash: await bcrypt.hash('password', 10),
+    },
+  });
+
+  // ── Categories ────────────────────────────────────────────────────────────
+  const categoryTree: Record<string, string | null> = {
+    Literature: null,
+    History: null,
+    Science: null,
+    RMP: null,
+    Arts: null,
+    'Social Science': null,
+    Other: null,
+    'American Literature': 'Literature',
+    'British Literature': 'Literature',
+    'European Literature': 'Literature',
+    'World Literature': 'Literature',
+    'American History': 'History',
+    'European History': 'History',
+    'World History': 'History',
+    'Other History': 'History',
+    Biology: 'Science',
+    Chemistry: 'Science',
+    Physics: 'Science',
+    'Other Science': 'Science',
+    Religion: 'RMP',
+    Mythology: 'RMP',
+    Philosophy: 'RMP',
+    'Painting/Sculpture': 'Arts',
+    'Classical Music': 'Arts',
+    'Other Fine Arts': 'Arts',
+  };
+
+  const cats: Record<string, number> = {};
+  for (const name of Object.keys(categoryTree)) {
+    const c = await prisma.category.create({ data: { name } });
+    cats[name] = c.id;
+  }
+  for (const [child, parent] of Object.entries(categoryTree)) {
+    if (parent) {
+      await prisma.categoryRelation.create({
+        data: { childCategoryId: cats[child], parentCategoryId: cats[parent] },
+      });
+    }
+  }
+
+  // ── Tournament ────────────────────────────────────────────────────────────
+  const tournament = await prisma.tournament.create({
+    data: {
+      name: 'Sample Tournament',
+      numberOfPackets: 14,
+      questionsPerPacket: 20,
+      distribution: {
+        Literature: ['American Literature', 'British Literature', 'European Literature', 'World Literature'],
+        History: ['American History', 'European History', 'World History', 'Other History'],
+        Science: ['Biology', 'Chemistry', 'Physics', 'Other Science'],
+        RMP: ['Religion', 'Mythology', 'Philosophy'],
+        Arts: ['Painting/Sculpture', 'Classical Music', 'Other Fine Arts'],
+        'Social Science': ['Social Science'],
+        Other: ['Other'],
+      },
+    },
+  });
+
+  // ── Distribution constraints (1 tossup + 1 bonus per subcategory per packet) ──
+  const leafCategories = Object.entries(categoryTree)
+    .filter(([, parent]) => parent !== null)
+    .map(([name]) => name);
+  // Also include top-level categories that are leaves in the distribution
+  const distributionLeaves = [...leafCategories, 'Social Science', 'Other'];
+  const uniqueLeaves = [...new Set(distributionLeaves)];
+
+  for (const name of uniqueLeaves) {
+    for (const qType of ['tossup', 'bonus'] as const) {
+      await prisma.packetDistributionConstraints.create({
+        data: {
+          tournamentId: tournament.id,
+          categoryId: cats[name],
+          questionType: qType,
+          numQuestions: 1,
+        },
+      });
+    }
+  }
+
+  // ── Packets ───────────────────────────────────────────────────────────────
+  for (let i = 1; i <= 14; i++) {
+    await prisma.packet.create({ data: { packetNumber: i, tournamentId: tournament.id } });
+  }
+
+  // ── Tossups ───────────────────────────────────────────────────────────────
+  const tossups: Array<{ category: string; questionText: string; answer: string }> = [
+    {
+      category: 'European Literature',
+      questionText:
+        'While visiting a tomb after a long boat trip, this character ponders what to eat for lunch while imagining an old woman watching over the body of her grandson. The odes written by this character were first published in the short-lived Athena magazine and were compared to Horace\'s in a fake review. In a novel, this character is described as constantly carrying and reading a copy of the fictional book The God of the Labyrinth. This character confesses his relationship struggles with Lydia and Marcendo during one of his periodic conversations with his creator. In that novel, this character dies by following his creator into the grave to the "other" Lisbon. For 10 points, what heteronym of Fernando Pessoa is the subject of a novel by José Saramago titled for the year of his death?',
+      answer: '_Ricardo Reis_ ["prompt on Fernando Pessoa until read"]',
+    },
+    {
+      category: 'American History',
+      questionText:
+        'A politician from this state introduced the Early Childhood Education Act and became the first woman Democrat to issue a televised response to the State of the Union. The ILWU supported a senator from this state to serve alongside Oren Long; that senator from this state was succeeded by a politician who took the name "Spark." A politician from this state was said to "answer Vietnam with that empty sleeve," referring to how he lost his arm with the 442nd Infantry Regiment. In the 1964 election, a senator from this state named Hiram Fong was the first Asian American to receive delegate votes. Patsy Mink served this state, home to a senator who succeeded Robert Byrd as President pro tempore, Daniel Inouye ("ee-NO-ay"). For 10 points, name this state where Inouye gave a keynote address defining "Aloha."',
+      answer: "_Hawai'i_",
+    },
+    {
+      category: 'Other Science',
+      questionText:
+        'Mark Robinson showed gene expression data deviates from this distribution, which the DESeq2 ("D-E-seek-two") package was developed to account for. The deviation of photon occupation number from this distribution is caused by antibunching. This distribution is the distribution of survivors in the null hypothesis of the Luria–Delbruck experiment. This distribution gives the molecular weight distribution produced by living polymerization. Both shot noise and the number of radioactive decay events from a slowly decaying source obey this distribution, which is followed by the event count of independent events with a constant mean rate. A single parameter lambda specifies both mean and variance in, for 10 points, what probability distribution named for a Frenchman?',
+      answer: '_Poisson distribution_ [_Poissonian statistics_; _Poisson noise_]',
+    },
+    {
+      category: 'British Literature',
+      questionText:
+        'In The Prime of Miss Jean Brodie, Sandy Stranger imagines a character from this poem telling her she is to be "so ill-fated in love" as Miss Jean Brodie recites this poem. That character in this poem is compared to a "bold seër in a trance" as she chants "a carol, mournful, holy." In this poem\'s last stanza, a man sees the title character and muses "She has a lovely face." This poem begins in a place where "On either side the river lie / Long fields of barley and of rye." The title character of this poem says "I am half sick of shadows" after weaving images of a nearby castle. In this poem, a mirror is "crack\'d from side to side" after the title character triggers a curse by looking out at Lancelot. For 10 points, name this Alfred, Lord Tennyson poem about a woman who dies on a boat headed to Camelot.',
+      answer: '_"The Lady of Shalott"_',
+    },
+    {
+      category: 'Painting/Sculpture',
+      questionText:
+        'A 2018 exhibition titled "Beyond" this character showcased paintings such as The Haunted Wood. A man in a red cloak clasps this character\'s hand in a painting showing this character tearing up flowers. The setting of one painting of this character was described as a "rascally wirefenced garden-rolled-nursery-maid\'s paradise" by John Ruskin and originally featured a water vole. An artist painted The Hireling Shepherd while working next to another painter who depicted this character along the Hogsmill River. Poppies symbolizing death appear in that painting of this character, which inspired a later depiction by John William Waterhouse. Elizabeth Siddal became sick after sitting in a cold tub for a painting of this character. For 10 points, John Everett Millais ("MILL-ay") painted what Shakespearean character floating in a river after her drowning?',
+      answer: '_Ophelia_',
+    },
+    {
+      category: 'Chemistry',
+      questionText:
+        'TOAC ("T-O-A-C") is a cyclic, radical one of these compounds used as a spin label in EPR spectroscopy. Isotope-labeled versions of these compounds are used in SILAC ("SYE-lack") experiments. Derivatives of one of these compounds react with boroxines ("bor-OCK-seens") to form asymmetric Corey–Bakshi–Shibata catalysts. These compounds are conjugated onto Wang resins using coupling agents like benzotriazoles or carbodiimides ("carbo-die-IM-mydes") in Merrifield solid-phase synthesis. In that method, these compounds must be protected by groups like Boc ("bock") and Fmoc ("F-mock"). These compounds are formed by treating an aldehyde with hydrogen cyanide then hydrolysis during the Strecker synthesis. Simple examples of these compounds can be formed by electrical discharges, as demonstrated by Miller and Urey. For 10 points, name these building blocks for polypeptides.',
+      answer:
+        '_amino acids_ [_AAs_; _alpha-amino acids_; _beta-amino acids_; _L-amino acids_; _D-amino acids_; _prolines_; _peptides_; _dipeptides_; _polypeptides_; _solid-phase peptide synthesis_; _SPPS_; _proteins_; "prompt on amines"; "prompt on carboxylic acids"]',
+    },
+    {
+      category: 'Other History',
+      questionText:
+        'A collection of these objects excavated in Iran was named in a lawsuit by survivors of a bombing in Jerusalem demanding that the University of Chicago sell them. Otto Neugebauer and Abraham Sachs evaluated the mathematical significance of one of these objects called Plimpton 322. A man named Azi produced these objects for a site excavated by Paolo Matthiae at Ebla. Children were trained to create these objects at places called eduba. Austen Henry Layard and Hormuzd Rassam discovered two collections of these objects that were brought to the British Museum from Mosul. A fire during the destruction of Nineveh preserved a massive collection of these objects established by Ashurbanipal. For 10 points, what kind of objects recorded Sumerian texts like the Epic of Gilgamesh?',
+      answer: '_clay tablets_ [_dub_; _ṭuppu_; _ṭuppum_]',
+    },
+    {
+      category: 'Other',
+      questionText:
+        'This band\'s singer repeats the line "you don\'t owe me anything" on a song about closeted actor Montgomery Clift. 2025 budget cuts inspired this band to re-release their lead single, which repeats "Callin\' on in transit." A song by this band references theories about faked deaths by asking a comedian "are you goofing on Elvis?" This band took the motto of Weaver D\'s diner in Athens, Georgia for the title of their album Automatic for the People. This band pauses to shout "Leonard Bernstein" on a rapid fire verse that also name-drops "Leonid Brezhnev, Lenny Bruce and Lester Bangs." A somber song by this band opens with the lyric "when your day is long." On this band\'s biggest hit, Michael Stipe sings "that\'s me in the corner." For 10 points, name this alternative band who recorded "Everybody Hurts" and "Losing My Religion."',
+      answer: '_R.E.M._',
+    },
+    {
+      category: 'Social Science',
+      questionText:
+        'This thinker supplemented his funding with support from Elsie Clews Parsons, who published Pueblo Indian Religion. This thinker\'s criticism of Madison Grant and protection of "non-conformist thought" led his university to bar him from teaching male undergraduates. Marvin Harris criticized this thinker for practicing "historical particularism" instead of universal laws of cultural development. This thinker\'s work on immigration for the Dillingham Commission led him to reject correlations between brain size and ability, which he expanded in a book based on his fieldwork with the Kwakiutl. This anthropologist\'s students included Zora Neale Hurston and Margaret Mead. For 10 points, name this author of The Mind of Primitive Man, known as the "father of American anthropology."',
+      answer: '_Franz Boas_',
+    },
+    {
+      category: 'Mythology',
+      questionText:
+        'The titular daughter of King Arthur travels east to retrieve one of these objects from Saladin to save her husband in the Irish romance, the Adventures of Orlando and Melora. The one-handed warrior Bedwyr used one of these objects that could draw "blood from the wind" when split in two and impart nine times the damage. An object of this type that bled "without the presence of flesh" is the first object seen by Perceval during a procession that includes a candelabra, a chalice, and a silver platter. Sir Balin uses this type of object to deliver the Dolorous Strike to the Fisher King\'s haunches, creating the Wasteland. St. Longinus utilizes this type of object to create the last of the Five Holy Wounds. For 10 points, what object "of Destiny" spills blood and water from Christ\'s side?',
+      answer: '_spears_ [_lances_; _gáe_; _lancea_; _the Bleeding Lance_; _the Holy Lance_; _the Spear of Destiny_]',
+    },
+  ];
+
+  // Slot number for each leaf category within a standard 20-question packet
+  const categorySlot: Record<string, number> = {
+    'American Literature': 1,
+    'British Literature': 2,
+    'European Literature': 3,
+    'World Literature': 4,
+    'American History': 5,
+    'European History': 6,
+    'World History': 7,
+    'Other History': 8,
+    Biology: 9,
+    Chemistry: 10,
+    Physics: 11,
+    'Other Science': 12,
+    Religion: 13,
+    Mythology: 14,
+    Philosophy: 15,
+    'Painting/Sculpture': 16,
+    'Classical Music': 17,
+    'Other Fine Arts': 18,
+    'Social Science': 19,
+    Other: 20,
+  };
+
+  const packet1 = await prisma.packet.findFirstOrThrow({
+    where: { tournamentId: tournament.id, packetNumber: 1 },
+  });
+
+  const createdTossupQuestions: Array<{ id: number; category: string }> = [];
+  for (const t of tossups) {
+    const q = await prisma.question.create({
+      data: {
+        authorId: user.id,
+        categoryId: cats[t.category],
+        questionType: 'tossup',
+        tournamentId: tournament.id,
+        tossup: { create: { questionText: t.questionText, answer: t.answer } },
+      },
+    });
+    createdTossupQuestions.push({ id: q.id, category: t.category });
+  }
+
+  for (const { id, category } of createdTossupQuestions) {
+    await prisma.packetQuestion.create({
+      data: {
+        packetId: packet1.id,
+        questionId: id,
+        questionType: 'tossup',
+        questionNumber: categorySlot[category],
+      },
+    });
+  }
+
+  // ── Bonuses ───────────────────────────────────────────────────────────────
+  const bonuses: Array<{
+    category: string;
+    part1Text: string; part1Answer: string;
+    part2Text: string; part2Answer: string;
+    part3Text: string; part3Answer: string;
+  }> = [
+    {
+      category: 'Religion',
+      part1Text:
+        'Talmudic requirements dictating the correct combination of teruah ("troo-AH"), tekiah ("teh-kee-AH"), and shevarim ("sh\'var-EEM") result in these objects being used approximately 100 times during Rosh Hashanah. For 10 points each: Name these objects that are used to signal the end of Yom Kippur. In the Book of Joshua, Israelite priests utilize these objects while circumambulating Jericho\'s walls seven times.',
+      part1Answer: '_shofars_ ["prompt on horns or trumpets"]',
+      part2Text:
+        'During Rosh Hashanah, shofars should not be blown outside the Holy Temple if the New Year falls on this day when Jews are expected to abstain from most work.',
+      part2Answer: '_Sabbath_ [_Shabbat_; _Shabbos_; "prompt on Saturday"]',
+      part3Text:
+        'While most shofars are crafted from ram horns, Jews from this country utilize the kudu\'s horns. The Lemba people of Zimbabwe trace their Jewish ancestry to an exiled community in this country.',
+      part3Answer: '_Yemen_ [_Republic of Yemen_; _Al Yaman_; _Al Jumhuriyah al Yamaniyah_]',
+    },
+    {
+      category: 'Chemistry',
+      part1Text:
+        'Like the related Buchwald–Hartwig amination, this reaction often uses metal catalysts containing two diphenylphosphine ligands connected via a ferrocene molecule. For 10 points each: Name this carbon–carbon bond-forming reaction between an organohalide and an aryl or alkyl boronic acid. This reaction\'s namesake discoverer shared the Nobel Prize with Richard Heck and Ei-ichi Negishi.',
+      part1Answer:
+        '_Suzuki reaction_ [_Suzuki cross-coupling_; _Suzuki–Miyaura cross-coupling_; _SM cross-coupling_; _SMC_; "prompt on cross-coupling reactions or coupling reactions"; "prompt on palladium-catalyzed reactions or nickel-catalyzed reactions"; "prompt on organometallic reactions"]',
+      part2Text:
+        'C–C bond formation occurs during the reductive form of this reaction, the last step of the Suzuki catalytic cycle. The E2 type of this reaction outcompetes substitution using bulky bases on secondary alkyl halides.',
+      part2Answer: '_elimination_ [_reductive elimination_]',
+      part3Text:
+        'Ligands with a large value for this quantity, like diphenylphosphines, tend to favor reductive instead of beta-hydride elimination. This quantity does not directly factor in a ligand\'s steric bulk, unlike a related quantity introduced by Chadwick Tolman.',
+      part3Answer: '_bite angle_ [_omega_; "prompt on angle"; "reject cone angle or theta"]',
+    },
+    {
+      category: 'American History',
+      part1Text:
+        'Description acceptable. A co-conspirator of this plot named James Wilkinson received a ciphered letter that betrayed it, which he then delivered to the president. For 10 points each: Name or describe this plot in which a politician was assisted by planters in an attempt to establish a country in Spanish Texas. This plot\'s leader was acquitted because he was found not to have committed an "act of war."',
+      part1Answer:
+        "_Burr conspiracy_ [_Aaron Burr's plot to overthrow the government_; _Burr's plot to create an empire_]",
+      part2Text:
+        'The conspiracy began while Burr served as vice president under this president before he was replaced by George Clinton in 1805. This president earlier served as the first Secretary of State.',
+      part2Answer: '_Thomas Jefferson_',
+      part3Text:
+        'To assist with his plans, Burr contacted Anthony Merry, who later served as British Minister to this country. The first log cabins in the US were constructed by settlers from this country.',
+      part3Answer: '_Sweden_ [_Sverige_]',
+    },
+    {
+      category: 'Social Science',
+      part1Text:
+        'This emotion was described by Viktor Frankl as "suffering without meaning" in describing what leads people to consider their lives unbearable. For 10 points each: What emotion names a device, alternatively called a "vertical chamber apparatus," which was used by the author of "The Nature of Love" in separation studies of maternal bonds?',
+      part1Answer: '_despair_ [_pit of despair_]',
+      part2Text:
+        'The "pit of despair" was developed to separate these animals by Harry Harlow, who studied whether these animals would prefer a surrogate made of cloth or wire.',
+      part2Answer: '_monkeys_ [_rhesus monkeys_; _capuchins_; "prompt on primates"]',
+      part3Text:
+        'This book draws on Søren Kierkegaard\'s conception of despair in describing how people choose not to be their authentic self. This book, subtitled "A Therapist\'s View of Psychotherapy," first discussed unconditional positive regard.',
+      part3Answer:
+        '_On Becoming a Person_ [_On Becoming a Person: A Therapist\'s View of Psychotherapy_]',
+    },
+    {
+      category: 'Physics',
+      part1Text:
+        "A formulation developed by this physicist inspired the phase space formulation of quantum mechanics. For 10 points each: Name this physicist whose principal function, S, is the action. This physicist's formulation of classical mechanics is expressed in terms of generalized momenta.",
+      part1Answer:
+        '_William Rowan Hamilton_ [_Hamilton\'s principal function_; _Hamiltonian mechanics_]',
+      part2Text:
+        "The negative derivative of Hamilton's principal function with respect to this quantity gives the Hamiltonian. The derivative of position with respect to this quantity gives velocity.",
+      part2Answer: '_time_',
+      part3Text:
+        'For a system of N particles, this number times N gives the dimensionality of Hamiltonian phase space. This number is the number of independent components of the Cauchy ("ko-SHEE") stress tensor.',
+      part3Answer: '_six_',
+    },
+    {
+      category: 'European History',
+      part1Text:
+        'The originator of the scheme centered on this place had earlier declared an independent "Republic of the Floridas" and claimed to have been named "cazique" ("ka-ZEEK") by the Miskito king George Frederic Augustus. For 10 points each: Name this fictional country in Central America to which the general Gregor MacGregor attracted unsuspecting emigrants. The financial fallout from investments for settling this place contributed to the Panic of 1825.',
+      part1Answer: '_Poyais_',
+      part2Text:
+        'The Austrian conman Victor Lustig became famous for selling this landmark twice. Lustig convinced buyers that this landmark, which had been built for the 1889 Paris World\'s Fair, was being sold for scrap.',
+      part2Answer: '_Eiffel Tower_ [_Tour Eiffel_]',
+      part3Text:
+        'In a 1785 "affair," Marie Antoinette\'s reputation was tarnished by forged letters stating her intent to buy one of these things, leading to accusations that the queen was refusing to pay for an extravagant purchase.',
+      part3Answer: '_diamond necklace_ [_Affair of the Diamond Necklace_]',
+    },
+    {
+      category: 'Other Fine Arts',
+      part1Text:
+        'The songs "All For You" and "Ghana Freedom" are by E. T. Mensah, who was known as the "King" of this genre, and his band The Tempos. For 10 points each: Name this genre that bands such as the Jazz Kings developed in expensive dance clubs. This Ghanaian genre\'s popularity in Nigeria influenced the development of jùjú and Afrobeat.',
+      part1Answer: '_highlife_',
+      part2Text:
+        'Ghanaian highlife keeps time with these instruments playing on beats 4, 6, and 8 in an 8-beat cycle. Nigerian highlife instead uses these percussion instruments\' namesake rhythmic patterns, whose son and rumba types are the foundation of Cuban music.',
+      part2Answer: '_claves_ [_son clave_; _rumba clave_]',
+      part3Text:
+        'In the early 2000s, Nigerian musicians such as Yinka Ayefele and Tope Alabi fused highlife with this genre. Mahalia Jackson sang in this genre of Black religious music.',
+      part3Answer: '_gospel_ [_gospel highlife_]',
+    },
+    {
+      category: 'World Literature',
+      part1Text:
+        "This author's posthumous play The Eternal Feminine imagines a conversation between notable women in Mexican history, including Sor Juana. For 10 points each: Name this pioneering feminist author of Ciudad Real and The Book of Lamentations, who described how sometimes your \"measuring stick breaks\" and \"your compass goes missing\" in her confessional poem \"Valium 10.\"",
+      part1Answer: '_Rosario Castellanos_',
+      part2Text:
+        'This other Mexican author wrote about the challenges faced by Sor Juana in The Traps of Faith. This author discussed Mexicans as the sons of "La Malinche" in his essay collection The Labyrinth of Solitude.',
+      part2Answer: '_Octavio Paz_',
+      part3Text:
+        "Sor Juana's defense of women's education, Reply to Sister Philotea, mentions the pioneering role of Teresa of Ávila but fails to mention this author, who used famous women as the \"building blocks\" for her \"city of ladies.\"",
+      part3Answer:
+        '_Christine de Pizan_ [_Cristina da Pizzano_; "prompt on Christine or de Pizan"; "prompt on Christina or da Pizzano"]',
+    },
+    {
+      category: 'Painting/Sculpture',
+      part1Text:
+        'An exhibition of this artist\'s work subtitled "Learning from Seurat" made the case for the influence of pointillism and French neo-Impressionism on this artist\'s work. For 10 points each: Name this painter whose copy of Seurat\'s The Bridge at Courbevoie influenced paintings like Shadow Play.',
+      part1Answer: '_Bridget Riley_',
+      part2Text:
+        "Many of Riley's paintings, like her Bolt of Colour, are located in the Chinati Foundation in this state's city of Marfa. The Rothko Chapel is also located in this state.",
+      part2Answer: '_Texas_ [_TX_]',
+      part3Text:
+        'Riley later produced a print called the Rothko Portfolio dominated by this color. Another artist asked models to lay on a canvas while covered in this color paint for his Anthropométries series.',
+      part3Answer: '_blue_',
+    },
+    {
+      category: 'American Literature',
+      part1Text:
+        "David Rabe's trilogy of plays about this war includes Sticks and Bones, which Christopher Durang parodied in a play set in suburban New Jersey. For 10 points each: Name this war that is the subject of plays like Terence McNally's Botticelli and Shirley Lauro's A Piece of My Heart, as well as Tim O'Brien's collection The Things They Carried.",
+      part1Answer:
+        '_Vietnam War_ [_Second Indochina War_; _Chiến tranh Việt Nam_; _Kháng Chiến Chống Mỹ_]',
+      part2Text:
+        "This playwright's La Turista allegorizes the Vietnam War via two tourists who grow ill in Mexico. In a play by this author, an old man wears a baseball cap to stop his amputee son from shaving his head while he sleeps.",
+      part2Answer: '_Sam Shepard_ [_Samuel Shepard Rogers III_]',
+      part3Text:
+        'A playwright with this surname depicted the amputee Vietnam veteran Kenneth Talley Jr. in the play Fifth of July. Another playwright with this surname created a brain-damaged veteran who blows a trumpet at his brother\'s funeral.',
+      part3Answer: '_Wilson_ [_Lanford Wilson_; _August Wilson_]',
+    },
+  ];
+
+  const createdBonusQuestions: Array<{ id: number; category: string }> = [];
+  for (const b of bonuses) {
+    const q = await prisma.question.create({
+      data: {
+        authorId: user.id,
+        categoryId: cats[b.category],
+        questionType: 'bonus',
+        tournamentId: tournament.id,
+        bonus: {
+          create: {
+            part1Text: b.part1Text,
+            part1Answer: b.part1Answer,
+            part2Text: b.part2Text,
+            part2Answer: b.part2Answer,
+            part3Text: b.part3Text,
+            part3Answer: b.part3Answer,
+          },
+        },
+      },
+    });
+    createdBonusQuestions.push({ id: q.id, category: b.category });
+  }
+
+  for (const { id, category } of createdBonusQuestions) {
+    await prisma.packetQuestion.create({
+      data: {
+        packetId: packet1.id,
+        questionId: id,
+        questionType: 'bonus',
+        questionNumber: categorySlot[category],
+      },
+    });
+  }
+
+  console.log('Seed complete.');
+  console.log(`  User: ${user.username} (id ${user.id})`);
+  console.log(`  Tournament: "${tournament.name}" (id ${tournament.id})`);
+  console.log(`  Categories: ${Object.keys(cats).length}`);
+  console.log(`  Tossups: ${tossups.length} → assigned to packet 1`);
+  console.log(`  Bonuses: ${bonuses.length} → assigned to packet 1`);
+}
+
+main()
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(() => prisma.$disconnect());

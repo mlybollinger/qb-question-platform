@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import isHotkey from "is-hotkey";
 import { Editable, withReact, Slate } from "slate-react";
 import { createEditor } from "slate";
@@ -14,15 +14,53 @@ const HOTKEYS = {
   "mod+u": "underline",
 };
 
+function tossupToSlate(tossup) {
+  return [
+    {
+      type: "paragraph",
+      children: [{ text: tossup.questionText }],
+    },
+    {
+      type: "answerline",
+      children: [
+        {
+          type: "main-answer",
+          children: [{ text: tossup.answer }],
+        },
+      ],
+    },
+  ];
+}
+
+const QUESTION_ID = 1;
+
 const SlateEditor = () => {
   const renderElement = useCallback((props) => <Element {...props} />, []);
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
   const [value, setValue] = useState(initialValue);
+  const [loading, setLoading] = useState(true);
   const editor = useMemo(
     () =>
       withEditableVoids(withInlines(withReact(withHistory(createEditor())))),
     []
   );
+
+  useEffect(() => {
+    fetch(`/api/questions/${QUESTION_ID}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((question) => {
+        if (question.tossup) {
+          setValue(tossupToSlate(question.tossup));
+        }
+      })
+      .catch((err) => console.error("Failed to load question:", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="editor-container">Loading…</div>;
 
   return (
     <div className="editor-container">
@@ -32,7 +70,7 @@ const SlateEditor = () => {
         onChange={(value) => {
           setValue(value);
         }}
-        initialValue={initialValue}
+        initialValue={value}
         className="slate-editor"
       >
         <SlateToolbar value={value} />

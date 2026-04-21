@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum QuestionType {
+  tossup
+  bonus
+}
+
+enum QuestionStatus {
+  written
+  edited
+  proofread
+}
+
+enum TournamentRole {
+  writer
+  editor
+}
+
+model User {
+  id            Int              @id @default(autoincrement())
+  firstName     String           @map("first_name")
+  lastName      String           @map("last_name")
+  username      String           @unique
+  email         String?          @unique
+  passwordHash  String           @map("password_hash")
+  questions     Question[]
+  tournamentRoles TournamentRoleAssignment[]
+
+  @@map("user")
+}
+
+model Category {
+  id        Int                @id @default(autoincrement())
+  name      String             @unique
+  questions Question[]
+  childRelations  CategoryRelation[] @relation("ParentCategory")
+  parentRelations CategoryRelation[] @relation("ChildCategory")
+  distributionConstraints PacketDistributionConstraints[]
+
+  @@map("category")
+}
+
+model CategoryRelation {
+  id               Int      @id @default(autoincrement())
+  childCategoryId  Int      @map("child_category_id")
+  parentCategoryId Int      @map("parent_category_id")
+  childCategory    Category @relation("ChildCategory", fields: [childCategoryId], references: [id])
+  parentCategory   Category @relation("ParentCategory", fields: [parentCategoryId], references: [id])
+
+  @@map("category_relation")
+}
+
+model Tournament {
+  id                Int                            @id @default(autoincrement())
+  name              String
+  metadata          Json?
+  dueDate           DateTime?                      @map("due_date")
+  numberOfPackets   Int?                           @map("number_of_packets")
+  questionsPerPacket Int?                          @map("questions_per_packet")
+  distribution      Json?
+  questions         Question[]
+  packets           Packet[]
+  distributionConstraints PacketDistributionConstraints[]
+  roles             TournamentRoleAssignment[]
+
+  @@map("tournament")
+}
+
+model Question {
+  id           Int            @id @default(autoincrement())
+  authorId     Int            @map("author_id")
+  categoryId   Int            @map("category_id")
+  questionType QuestionType   @map("question_type")
+  tournamentId Int            @map("tournament_id")
+  createdDate  DateTime       @default(now()) @map("created_date")
+  updatedDate  DateTime       @updatedAt @map("updated_date")
+  status       QuestionStatus @default(written)
+  author       User           @relation(fields: [authorId], references: [id])
+  category     Category       @relation(fields: [categoryId], references: [id])
+  tournament   Tournament     @relation(fields: [tournamentId], references: [id])
+  tossup       Tossup?
+  bonus        Bonus?
+  packetQuestions PacketQuestion[]
+
+  @@map("question")
+}
+
+model Tossup {
+  id           Int      @id @default(autoincrement())
+  questionId   Int      @unique @map("question_id")
+  questionText String   @map("question_text")
+  answer       String
+  question     Question @relation(fields: [questionId], references: [id])
+
+  @@map("tossup")
+}
+
+model Bonus {
+  id           Int      @id @default(autoincrement())
+  questionId   Int      @unique @map("question_id")
+  part1Text    String   @map("part_1_text")
+  part1Answer  String   @map("part_1_answer")
+  part2Text    String   @map("part_2_text")
+  part2Answer  String   @map("part_2_answer")
+  part3Text    String   @map("part_3_text")
+  part3Answer  String   @map("part_3_answer")
+  question     Question @relation(fields: [questionId], references: [id])
+
+  @@map("bonus")
+}
+
+model PacketDistributionConstraints {
+  id           Int          @id @default(autoincrement())
+  tournamentId Int          @map("tournament_id")
+  categoryId   Int?         @map("category_id")
+  questionType QuestionType @map("question_type")
+  numQuestions Int          @map("num_questions")
+  tournament   Tournament   @relation(fields: [tournamentId], references: [id])
+  category     Category?    @relation(fields: [categoryId], references: [id])
+
+  @@map("packet_distribution_constraints")
+}
+
+model Packet {
+  id           Int             @id @default(autoincrement())
+  packetNumber Int             @map("packet_number")
+  tournamentId Int             @map("tournament_id")
+  tournament   Tournament      @relation(fields: [tournamentId], references: [id])
+  packetQuestions PacketQuestion[]
+
+  @@map("packet")
+}
+
+model PacketQuestion {
+  id           Int          @id @default(autoincrement())
+  questionId   Int          @map("question_id")
+  packetId     Int          @map("packet_id")
+  questionNumber Int        @map("question_number")
+  questionType QuestionType @map("question_type")
+  question     Question     @relation(fields: [questionId], references: [id])
+  packet       Packet       @relation(fields: [packetId], references: [id])
+
+  @@map("packet_question")
+}
+
+model TournamentRoleAssignment {
+  id           Int            @id @default(autoincrement())
+  tournamentId Int            @map("tournament_id")
+  userId       Int            @map("user_id")
+  roleName     TournamentRole @map("role_name")
+  tournament   Tournament     @relation(fields: [tournamentId], references: [id])
+  user         User           @relation(fields: [userId], references: [id])
+
+  @@map("tournament_role")
+}

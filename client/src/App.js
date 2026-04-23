@@ -43,6 +43,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/editor" element={<QuestionWriter />} />
+              <Route path="/editor/:id" element={<QuestionWriter />} />
               <Route path="/all-questions" element={<AllQuestions />} />
               <Route path="/set-admin" element={<SetAdmin />} />
               <Route path="/slate" element={<SlateEditor />} />

@@ -9,6 +9,7 @@ export default function MenuBar({ editor, limit }) {
     <div className="editor-toolbar">
       <div className='editor-toolbar-buttons'>
         <button className="editor-toolbar-copy-question">Copy Question</button>
+        <button className="editor-toolbar-save-question">Save Question</button>
         <button className="editor-toolbar-delete-question">Delete</button>
       </div>
       <div className='editor-toolbar-question-length'>

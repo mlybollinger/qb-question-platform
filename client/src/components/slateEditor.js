@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import isHotkey from "is-hotkey";
 import { Editable, withReact, Slate } from "slate-react";
 import { createEditor } from "slate";
@@ -14,53 +14,17 @@ const HOTKEYS = {
   "mod+u": "underline",
 };
 
-function tossupToSlate(tossup) {
-  return [
-    {
-      type: "paragraph",
-      children: [{ text: tossup.questionText }],
-    },
-    {
-      type: "answerline",
-      children: [
-        {
-          type: "main-answer",
-          children: [{ text: tossup.answer }],
-        },
-      ],
-    },
-  ];
-}
-
-const QUESTION_ID = 1;
-
-const SlateEditor = () => {
+const SlateEditor = ({ initialValue: propValue, onChange: onChangeProp, onSave: onSave }) => {
   const renderElement = useCallback((props) => <Element {...props} />, []);
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
-  const [value, setValue] = useState(initialValue);
-  const [loading, setLoading] = useState(true);
+  const [value, setValue] = useState(propValue ?? defaultValue);
   const editor = useMemo(
     () =>
       withEditableVoids(withInlines(withReact(withHistory(createEditor())))),
     []
   );
 
-  useEffect(() => {
-    fetch(`/api/questions/${QUESTION_ID}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((question) => {
-        if (question.tossup) {
-          setValue(tossupToSlate(question.tossup));
-        }
-      })
-      .catch((err) => console.error("Failed to load question:", err))
-      .finally(() => setLoading(false));
-  }, []);
 
-  if (loading) return <div className="editor-container">Loading…</div>;
 
   return (
     <div className="editor-container">
@@ -69,11 +33,12 @@ const SlateEditor = () => {
         value={value}
         onChange={(value) => {
           setValue(value);
+          onChangeProp?.(value);
         }}
-        initialValue={value}
+        initialValue={propValue ?? defaultValue}
         className="slate-editor"
       >
-        <SlateToolbar value={value} />
+        <SlateToolbar value={value} onSave={onSave} />
         <HoveringToolbar />
           <Editable
             renderElement={renderElement}
@@ -108,7 +73,14 @@ const Element = ({ attributes, children, element }) => {
         </span>
       );
     case "main-answer":
-      return <MainAnswer {...attributes} />;
+      return (
+
+      <p style={style} {...attributes}>
+
+          {children}
+        </p>
+    
+      )
     case "answerline-instruction":
       return (
         <AnswerlineInstruction {...attributes}>
@@ -121,6 +93,13 @@ const Element = ({ attributes, children, element }) => {
           <hr></hr>
           {children}
         </div>
+      );
+    case "answer-label":
+      return (
+        <span {...attributes} contentEditable={false}>
+          ANSWER: 
+          {children} {/* still need to render children even for void nodes */}
+        </span>
       );
     default:
       return (
@@ -151,7 +130,7 @@ const Leaf = ({ attributes, children, leaf }) => {
   return <span {...attributes}>{children}</span>;
 };
 
-const initialValue = [
+const defaultValue = [
   {
     type: "paragraph",
     children: [
@@ -164,8 +143,14 @@ const initialValue = [
     type: "answerline",
     children: [
       {
+            type: "answer-label",  
+            children: [{ text: "" }],
+          },
+      {
         type: "main-answer",
-        children: [{ text: "" }],
+        children: [
+          
+          { text: "stuff" }],
       },
     ],
   },

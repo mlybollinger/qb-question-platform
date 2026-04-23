@@ -1,4 +1,5 @@
 import { MainAnswer } from "./answerline";
+import { Editor, Range, Transforms} from "slate"
 
 export const Element = ({ attributes, children, element }) => {
   const style = { textAlign: element.align };
@@ -66,11 +67,30 @@ export const withInlines = (editor) => {
 };
 
 export const withEditableVoids = (editor) => {
-  const { isVoid } = editor;
+  const { isVoid, deleteBackward } = editor;
 
   editor.isVoid = (element) => {
-    return element.type === "editable-void" ? true : isVoid(element);
+    const voidTypes = ["editable-void", "answer-label"]
+    return voidTypes.includes(element.type) ? true : isVoid(element);
   };
 
-  return editor;
+  editor.deleteBackward = (...args) => {
+  const { selection } = editor;
+
+  if (selection && Range.isCollapsed(selection)) {
+    // Look at the node just before the cursor
+    const before = Editor.before(editor, selection);
+    if (before) {
+      const [match] = Editor.nodes(editor, {
+        at: before,
+        match: n => n.type === "answer-label",
+      });
+
+      if (match) return; // cursor is right after the label, block deletion
+    }
+  }
+
+  deleteBackward(...args);
+};
+  return editor;  
 };

@@ -24,8 +24,6 @@ export default function AllQuestions() {
     ],
   };
 
-  console.log(cats);
-
   return (
     <div>
       <h2>All Questions</h2>

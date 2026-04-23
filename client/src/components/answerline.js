@@ -14,7 +14,8 @@ const HOTKEYS = {
   "mod+u": "underline",
 };
 
-export const MainAnswer = ({ attributes }) => {
+export const MainAnswer = ({ attributes }, { value }) => {
+  console.log("Value: ", value);
   return (
     // Need contentEditable=false or Firefox has issues with certain input types.
     <>
@@ -24,7 +25,7 @@ export const MainAnswer = ({ attributes }) => {
         contentEditable={false}
       >
         <span>ANSWER: </span>
-        <RichTextEditor className="main-answer"  />
+        <RichTextEditor className="main-answer" initialValue={value} />
         <InsertAnswerlineInstructionButton />
       </div>
     </>
@@ -34,6 +35,7 @@ export const MainAnswer = ({ attributes }) => {
 export const AnswerlineInstruction = ({ attributes }) => {
   return (
     // Need contentEditable=false or Firefox has issues with certain input types.
+    
     <>
       <div
         {...attributes}
@@ -42,13 +44,14 @@ export const AnswerlineInstruction = ({ attributes }) => {
       >
         <span>ANSWER: </span>
         <RichTextEditor className="answerline-instruction-editor"/>
-        <RemoveAnswerlineInstructionButton />
+        <RemoveAnswerlineInstructionButton /> 
       </div>
     </>
   );
 };
 
 const RichTextEditor = ({ init }) => {
+  console.log("Init: ", init)
   const renderElement = useCallback((props) => <Element {...props} />, []);
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
 

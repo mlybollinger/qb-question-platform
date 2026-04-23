@@ -4,7 +4,7 @@ import { Transforms, Editor, Range } from "slate";
 import { FaBold, FaItalic, FaUnderline, FaNapster } from "react-icons/fa";
 import _ from "lodash";
 
-export function SlateToolbar({ value }) {
+export function SlateToolbar({ value, onSave }) {
   const paragraphs = _.filter(value, (node) => node.type === "paragraph");
   const pgs = _.map(
     _.filter(value, (node) => node.type === "pronunciation-guide"),
@@ -16,11 +16,14 @@ export function SlateToolbar({ value }) {
   )
     .flat()
     .concat(pgs);
+  
 
   return (
     <div className="editor-toolbar">
       <div className="editor-toolbar-buttons">
-        <button className="editor-toolbar-copy-question">Copy Question</button>
+        <button className="editor-toolbar-copy-question" onClick={onSave}>Copy Question</button>
+        <button className="editor-toolbar-copy-question" onClick={onSave}>Save Question</button>
+
         <button className="editor-toolbar-delete-question">Delete</button>
       </div>
       <div className="editor-toolbar-question-length">

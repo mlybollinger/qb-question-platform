@@ -9,7 +9,9 @@ export const getAll = async (req: Request, res: Response) => {
 
 export const getById = async (req: Request, res: Response) => {
   const packet = await packetService.getById(parseInt(req.params.id));
-  if (!packet) return res.status(404).json({ error: 'Packet not found' });
+  if (!packet) {
+    return res.status(404).json({ error: 'Packet not found' });
+  }
   res.json(packet);
 };
 

@@ -82,6 +82,7 @@ model Question {
   createdDate  DateTime       @default(now()) @map("created_date")
   updatedDate  DateTime       @updatedAt @map("updated_date")
   status       QuestionStatus @default(written)
+  questionBlob Json           @map("question_blob")
   author       User           @relation(fields: [authorId], references: [id])
   category     Category       @relation(fields: [categoryId], references: [id])
   tournament   Tournament     @relation(fields: [tournamentId], references: [id])
@@ -105,6 +106,7 @@ model Tossup {
 model Bonus {
   id           Int      @id @default(autoincrement())
   questionId   Int      @unique @map("question_id")
+  leadin       String
   part1Text    String   @map("part_1_text")
   part1Answer  String   @map("part_1_answer")
   part2Text    String   @map("part_2_text")

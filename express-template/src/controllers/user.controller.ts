@@ -8,7 +8,9 @@ export const getAll = async (_req: Request, res: Response) => {
 
 export const getById = async (req: Request, res: Response) => {
   const user = await userService.getById(parseInt(req.params.id));
-  if (!user) return res.status(404).json({ error: 'User not found' });
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
   res.json(user);
 };
 

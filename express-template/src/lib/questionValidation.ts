@@ -1,102 +1,158 @@
-const HAS_UNDERLINE = /_[^_]+_/;
+type SlateNode = {
+  type?: string;
+  text?: string;
+  children?: SlateNode[];
+};
 
-function parseAnswerBrackets(answer: string): {
-  main: string;
-  alternates: string[];
-} {
-  const bracketStart = answer.indexOf('[');
-  const bracketEnd = answer.lastIndexOf(']');
+function collectLeafText(node: SlateNode): string {
+  if (typeof node.text === 'string') return node.text;
+  return (node.children ?? []).map(collectLeafText).join('');
+}
 
-  if (bracketStart === -1) {
-    return { main: answer.trim(), alternates: [] };
+function directChildren(node: SlateNode, type: string): SlateNode[] {
+  return (node.children ?? []).filter((c) => c.type === type);
+}
+
+export function validateTossupBlob(blob: unknown): string | null {
+  if (!Array.isArray(blob)) {
+    return 'questionBlob must be an array of Slate nodes';
   }
 
-  const main = answer.slice(0, bracketStart).trim();
-  const inside = answer.slice(bracketStart + 1, bracketEnd === -1 ? undefined : bracketEnd);
-  const alternates = inside.split(';').map((s) => s.trim()).filter(Boolean);
-  return { main, alternates };
-}
+  const nodes = blob as SlateNode[];
 
-function isQuotedInstruction(s: string): boolean {
-  return s.startsWith('"') && s.endsWith('"');
-}
+  const paragraphs = nodes.filter((n) => n.type === 'paragraph');
+  if (paragraphs.length !== 1) {
+    return 'questionBlob must contain one paragraph node';
+  }
+  if (!paragraphs.map(collectLeafText).join('').trim()) {
+    return 'Question body must not be empty';
+  }
 
-function instructionType(s: string): 'prompt' | 'reject' | null {
-  const inner = s.slice(1, -1).trim().toLowerCase();
-  if (inner.startsWith('prompt')) return 'prompt';
-  if (inner.startsWith('reject')) return 'reject';
+  const answerlines = nodes.filter((n) => n.type === 'answerline');
+  if (answerlines.length !== 1) {
+    return 'questionBlob must contain exactly one answerline node';
+  }
+
+  const answerline = answerlines[0];
+
+  if (directChildren(answerline, 'answer-label').length === 0) {
+    return 'Answerline must contain an answer-label node';
+  }
+
+  const mainAnswers = directChildren(answerline, 'main-answer');
+  if (mainAnswers.length === 0) {
+    return 'Answerline must contain a main-answer node';
+  }
+
+  if (!mainAnswers.map(collectLeafText).join('').trim()) {
+    return 'Answer must not be empty';
+  }
+
   return null;
 }
 
-export function validateAnswerLine(answer: string): string | null {
-  const { main, alternates } = parseAnswerBrackets(answer);
+export function extractTossupText(blob: SlateNode[]): { questionText: string; answer: string } {
+  const paragraphs = blob.filter((n) => n.type === 'paragraph');
+  const questionText = paragraphs.map(collectLeafText).join('\n');
 
-  if (!HAS_UNDERLINE.test(main)) {
-    return 'Answer line must have at least one underlined section (e.g. _Answer_)';
+  const answerline = blob.find((n) => n.type === 'answerline')!;
+  const answer = directChildren(answerline, 'main-answer').map(collectLeafText).join('');
+
+  return { questionText, answer };
+}
+
+function extractAnswerlineText(answerline: SlateNode): string {
+  return directChildren(answerline, 'main-answer').map(collectLeafText).join('');
+}
+
+function collectPartBodyText(partBody: SlateNode): string {
+  return (partBody.children ?? [])
+    .filter((c) => c.type !== 'point-marker')
+    .map(collectLeafText)
+    .join('');
+}
+
+function validateAnswerline(answerline: SlateNode, label: string): string | null {
+  if (directChildren(answerline, 'answer-label').length === 0) {
+    return `${label} answerline must contain an answer-label node`;
+  }
+  const mainAnswers = directChildren(answerline, 'main-answer');
+  if (mainAnswers.length === 0) {
+    return `${label} answerline must contain a main-answer node`;
+  }
+  if (!mainAnswers.map(collectLeafText).join('').trim()) {
+    return `${label} answer must not be empty`;
+  }
+  return null;
+}
+
+export function validateBonusBlob(blob: unknown): string | null {
+  if (!Array.isArray(blob)) {
+    return 'questionBlob must be an array of Slate nodes';
   }
 
-  type Phase = 'accept' | 'prompt' | 'reject';
-  let phase: Phase = 'accept';
+  const nodes = blob as SlateNode[];
 
-  for (const alt of alternates) {
-    if (isQuotedInstruction(alt)) {
-      const type = instructionType(alt);
-      if (!type) {
-        return `Quoted instruction "${alt}" must start with "prompt" or "reject"`;
-      }
-      if (type === 'prompt') {
-        if (phase === 'reject') {
-          return 'Prompt instructions must come before reject instructions';
-        }
-        phase = 'prompt';
-      } else {
-        phase = 'reject';
-      }
-    } else {
-      if (phase !== 'accept') {
-        return 'Accept alternates must come before prompt and reject instructions';
-      }
-      if (!HAS_UNDERLINE.test(alt)) {
-        return `Alternate answer "${alt}" must have at least one underlined section (e.g. _Answer_)`;
-      }
+  const leadins = nodes.filter((n) => n.type === 'bonus_leadin');
+  if (leadins.length !== 1) {
+    return 'questionBlob must contain exactly one bonus_leadin node';
+  }
+  if (!collectLeafText(leadins[0]).trim()) {
+    return 'Bonus leadin must not be empty';
+  }
+
+  const parts = nodes.filter((n) => n.type === 'bonus_part');
+  if (parts.length !== 3) {
+    return 'questionBlob must contain exactly three bonus_part nodes';
+  }
+
+  for (let i = 0; i < 3; i++) {
+    const part = parts[i];
+    const label = `Part ${i + 1}`;
+
+    const partBodies = directChildren(part, 'bonus-part-body');
+    if (partBodies.length !== 1) {
+      return `${label} must contain exactly one bonus-part-body node`;
     }
+    const partBody = partBodies[0];
+
+    if (directChildren(partBody, 'point-marker').length === 0) {
+      return `${label} bonus-part-body must contain a point-marker node`;
+    }
+    if (!collectPartBodyText(partBody).trim()) {
+      return `${label} body text must not be empty`;
+    }
+
+    const answerlines = directChildren(part, 'answerline');
+    if (answerlines.length !== 1) {
+      return `${label} must contain exactly one answerline node`;
+    }
+    const err = validateAnswerline(answerlines[0], label);
+    if (err) return err;
   }
 
   return null;
 }
 
-export function validateTossupText(text: string): string | null {
-  const lines = text.trimEnd().split('\n');
-  const lastLine = lines[lines.length - 1].trim();
-  if (!lastLine.startsWith('For 10 points, ')) {
-    return 'Tossup text must end with a line beginning "For 10 points, "';
-  }
-  return null;
-}
+export function extractBonusText(blob: SlateNode[]): {
+  leadin: string;
+  part1Text: string; part1Answer: string;
+  part2Text: string; part2Answer: string;
+  part3Text: string; part3Answer: string;
+} {
+  const leadin = collectLeafText(blob.find((n) => n.type === 'bonus_leadin')!);
+  const parts = blob.filter((n) => n.type === 'bonus_part');
 
-export type ValidationErrors = Record<string, string>;
+  const extract = (part: SlateNode) => ({
+    text: collectPartBodyText(directChildren(part, 'bonus-part-body')[0]),
+    answer: extractAnswerlineText(directChildren(part, 'answerline')[0]),
+  });
 
-export function validateTossupFields(fields: { questionText: string; answer: string }): ValidationErrors {
-  const errors: ValidationErrors = {};
-  const textErr = validateTossupText(fields.questionText);
-  if (textErr) errors.questionText = textErr;
-  const ansErr = validateAnswerLine(fields.answer);
-  if (ansErr) errors.answer = ansErr;
-  return errors;
-}
-
-export function validateBonusFields(fields: {
-  part1Answer: string; part2Answer: string; part3Answer: string;
-}): ValidationErrors {
-  const errors: ValidationErrors = {};
-  const fields_map: [keyof typeof fields, string][] = [
-    ['part1Answer', 'part1Answer'],
-    ['part2Answer', 'part2Answer'],
-    ['part3Answer', 'part3Answer'],
-  ];
-  for (const [key, label] of fields_map) {
-    const err = validateAnswerLine(fields[key]);
-    if (err) errors[label] = err;
-  }
-  return errors;
+  const [p1, p2, p3] = parts.map(extract);
+  return {
+    leadin,
+    part1Text: p1.text, part1Answer: p1.answer,
+    part2Text: p2.text, part2Answer: p2.answer,
+    part3Text: p3.text, part3Answer: p3.answer,
+  };
 }

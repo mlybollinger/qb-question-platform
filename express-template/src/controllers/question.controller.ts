@@ -1,27 +1,6 @@
 import { Request, Response } from 'express';
 import * as questionService from '../services/question.service';
 import { QuestionType, QuestionStatus } from '@prisma/client';
-import { validateTossupFields, validateBonusFields, ValidationErrors } from '../lib/questionValidation';
-
-function runValidation(body: any): ValidationErrors {
-  if (body.tossup) {
-    const { questionText, answer } = body.tossup;
-    if (questionText !== undefined || answer !== undefined) {
-      return validateTossupFields({ questionText: questionText ?? '', answer: answer ?? '' });
-    }
-  }
-  if (body.bonus) {
-    const { part1Answer, part2Answer, part3Answer } = body.bonus;
-    if (part1Answer !== undefined || part2Answer !== undefined || part3Answer !== undefined) {
-      return validateBonusFields({
-        part1Answer: part1Answer ?? '',
-        part2Answer: part2Answer ?? '',
-        part3Answer: part3Answer ?? '',
-      });
-    }
-  }
-  return {};
-}
 
 export const getAll = async (req: Request, res: Response) => {
   const { tournamentId, authorId, questionType, status } = req.query;
@@ -41,8 +20,6 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const errors = runValidation(req.body);
-  if (Object.keys(errors).length > 0) return res.status(400).json({ errors });
   try {
     const question = await questionService.create(req.body);
     res.status(201).json(question);
@@ -52,8 +29,6 @@ export const create = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
-  const errors = runValidation(req.body);
-  if (Object.keys(errors).length > 0) return res.status(400).json({ errors });
   try {
     const question = await questionService.update(parseInt(req.params.id), req.body);
     res.json(question);

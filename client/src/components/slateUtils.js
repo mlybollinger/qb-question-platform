@@ -47,7 +47,7 @@ export const withInlines = (editor) => {
     editor;
 
   editor.isInline = (element) =>
-    ["link", "button", "badge"].includes(element.type) || isInline(element);
+    ["link", "button", "badge", "bonus-part-text", "point-marker"].includes(element.type) || isInline(element);
 
   editor.isElementReadOnly = (element) =>
     element.type === "badge" || isElementReadOnly(element);
@@ -70,7 +70,7 @@ export const withEditableVoids = (editor) => {
   const { isVoid, deleteBackward } = editor;
 
   editor.isVoid = (element) => {
-    const voidTypes = ["editable-void", "answer-label"]
+    const voidTypes = ["editable-void", "answer-label", "point-marker"]
     return voidTypes.includes(element.type) ? true : isVoid(element);
   };
 
@@ -83,10 +83,14 @@ export const withEditableVoids = (editor) => {
     if (before) {
       const [match] = Editor.nodes(editor, {
         at: before,
-        match: n => n.type === "answer-label",
+        match: n => n.type === "answer-label" || n.type === 'point-marker',
       });
 
-      if (match) return; // cursor is right after the label, block deletion
+      const [node] = Editor.nodes(editor, {
+        match: (n) => !Editor.isEditor(n) && (n.type === "answer-label" || n.type === 'point-marker'),
+      })
+
+      if (match || node) return; // cursor is right after the label, block deletion
     }
   }
 

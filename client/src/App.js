@@ -8,6 +8,8 @@ import Navbar from "./components/navbar";
 import Sidebar from "./components/sidebar";
 import SetAdmin from "./pages/setAdmin";
 import QuestionWriter from "./pages/questionWriter";
+import QuestionEditor from "./pages/questionEditor";
+
 import AllQuestions from "./components/allQuestions";
 import SlateEditor from "./components/slateEditor";
 import Packetizing from "./components/packetizingView";
@@ -43,7 +45,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/editor" element={<QuestionWriter />} />
-              <Route path="/editor/:id" element={<QuestionWriter />} />
+              <Route path="/editor/:id" element={<QuestionEditor />} />
               <Route path="/all-questions" element={<AllQuestions />} />
               <Route path="/set-admin" element={<SetAdmin />} />
               <Route path="/slate" element={<SlateEditor />} />

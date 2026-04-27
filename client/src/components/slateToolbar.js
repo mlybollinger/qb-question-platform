@@ -22,7 +22,7 @@ export function SlateToolbar({ value, onSave }) {
     <div className="editor-toolbar">
       <div className="editor-toolbar-buttons">
         <button className="editor-toolbar-copy-question" onClick={onSave}>Copy Question</button>
-        <button className="editor-toolbar-copy-question" onClick={onSave}>Save Question</button>
+        <button className="editor-toolbar-save-question" onClick={onSave}>Save Question</button>
 
         <button className="editor-toolbar-delete-question">Delete</button>
       </div>

@@ -2,16 +2,30 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import SlateEditor from "../components/slateEditor";
 import { SlateToolbar } from "../components/slateToolbar";
-import { WriterToolbar } from "../components/writerToolbar";
-import { useNavigate } from "react-router-dom";
 
-export default function QuestionWriter() {
+export default function QuestionEditor() {
   const { id } = useParams();
   const [questionBlob, setQuestionBlob] = useState(null);
   const [loading, setLoading] = useState(!!id);
   const [error, setError] = useState(null);
   const [saveMessageVisible, setSaveMessageVisible] = useState(false);
-  const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/questions/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Question ${id} not found`);
+        return res.json();
+      })
+      .then((data) => {
+        setQuestionBlob(data.questionBlob);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [id]);
 
   const showSuccessMessage = () => {
     setSaveMessageVisible(true);
@@ -20,21 +34,15 @@ export default function QuestionWriter() {
     }, 3000)
   }
   const handleSave = async () => {
-    await fetch(`/api/questions/`, {
-      method: 'POST',
-      body: JSON.stringify({ authorId: 1, 
-        tournamentId: 1,
-        categoryId: 1,
-        questionType: "tossup",
-        questionBlob }),
+    await fetch(`/api/questions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ questionBlob }),
       headers: { 'Content-Type': 'application/json'}
     })
-    .then(async (res) => {
+    .then((res) => {
       if (!res.ok) throw new Error(`Error saving question ${id}`);
-
       showSuccessMessage()
-      const response = await res.json();
-      navigate(`/editor/${response.id}`)
+      return res.json();
     })
   }
 
@@ -46,8 +54,8 @@ export default function QuestionWriter() {
   return (
     <>
       <h1>Write a Question</h1>
-        <WriterToolbar value={questionBlob} onSave={handleSave} />
-        
+        <SlateToolbar value={questionBlob} onSave={handleSave} />
+
         <SlateEditor initialValue={questionBlob} onChange={setQuestionBlob} onSave={handleSave} saveMessageVisible={saveMessageVisible}/>
     </>
   );

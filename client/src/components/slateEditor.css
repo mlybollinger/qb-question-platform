@@ -48,12 +48,20 @@ accept {
 .editor-toolbar-buttons {
   display: flex;
   column-gap: 12px;
+  cursor: pointer;
 }
 
 .editor-toolbar-copy-question {
   background-color: var(--light-background);
   border-color: var(--light-line-color);
 }
+
+.editor-toolbar-save-question {
+  background-color: var(--light-background);
+  border-color: var(--light-line-color);
+  cursor: pointer;
+}
+
 
 .editor-toolbar-delete-question {
   background-color: var(--red-light);
@@ -117,11 +125,11 @@ accept {
 .bubble-menu button:last-child {
   border: none;
 }
-
+/* 
 .answerline {
   margin-top: 12px;
   margin-bottom: 8px;
-}
+} */
 
 .answerline [data-slate-editor="true"] {
   margin-top: 0px;

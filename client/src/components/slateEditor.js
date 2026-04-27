@@ -4,9 +4,10 @@ import { Editable, withReact, Slate } from "slate-react";
 import { createEditor } from "slate";
 import { withHistory } from "slate-history";
 import "./slateEditor.css";
-import { SlateToolbar, HoveringToolbar, toggleMark } from "./slateToolbar";
-import { AnswerlineInstruction, MainAnswer } from "./answerline";
+import { HoveringToolbar, toggleMark } from "./slateToolbar";
+import { AnswerlineInstruction } from "./answerline";
 import { withInlines, withEditableVoids } from "./slateUtils";
+import { PointMarker } from "./bonus";
 
 const HOTKEYS = {
   "mod+b": "bold",
@@ -14,7 +15,7 @@ const HOTKEYS = {
   "mod+u": "underline",
 };
 
-const SlateEditor = ({ initialValue: propValue, onChange: onChangeProp, onSave: onSave }) => {
+const SlateEditor = ({ initialValue: propValue, onChange: onChangeProp, onSave: onSave, saveMessageVisible: saveMessageVisible }) => {
   const renderElement = useCallback((props) => <Element {...props} />, []);
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
   const [value, setValue] = useState(propValue ?? defaultValue);
@@ -38,7 +39,6 @@ const SlateEditor = ({ initialValue: propValue, onChange: onChangeProp, onSave: 
         initialValue={propValue ?? defaultValue}
         className="slate-editor"
       >
-        <SlateToolbar value={value} onSave={onSave} />
         <HoveringToolbar />
           <Editable
             renderElement={renderElement}
@@ -57,8 +57,12 @@ const SlateEditor = ({ initialValue: propValue, onChange: onChangeProp, onSave: 
             }}
           />
       </Slate>
+            { saveMessageVisible && <div> { "Save Successful" }</div> }
+
       <pre>{JSON.stringify(value, null, 2)}</pre>
+
     </div>
+
   );
 };
 
@@ -90,17 +94,34 @@ const Element = ({ attributes, children, element }) => {
     case "answerline":
       return (
         <div className="answerline" {...attributes}>
-          <hr></hr>
+          <p>
           {children}
+          </p>
         </div>
       );
     case "answer-label":
       return (
-        <span {...attributes} contentEditable={false}>
-          ANSWER: 
-          {children} {/* still need to render children even for void nodes */}
+        <span {...attributes}>
+          <span contentEditable={false}>
+             {'ANSWER: '}
+          </span>
+          {children} 
         </span>
       );
+    case "point-marker":
+      return (
+        
+        <PointMarker {...attributes} children={children} difficulty={element.difficulty} points={element.points}>
+        </PointMarker>
+      )
+    case "bonus_leadin":
+      return <p style={style} {...attributes}>
+          {children} { '\n'} 
+        </p>
+    case "bonus_part":
+      return <div style={style} {...attributes}>
+          {children}
+        </div>
     default:
       return (
         <p style={style} {...attributes}>
@@ -130,30 +151,37 @@ const Leaf = ({ attributes, children, leaf }) => {
   return <span {...attributes}>{children}</span>;
 };
 
+
 const defaultValue = [
   {
-    type: "paragraph",
-    children: [
+    "type": "paragraph",
+    "children": [
       {
-        text: "This book describes teenagers who cheat on driver's license tests by cribbing from test answers sewn into clothing that translates as “flower cloth.” Another part of this book describes doctors' elation at publishing a paper about a novel nosocomial infection. This book attributes the sensitivity of CPS social worker Jeanine Hilt to having to deal with fundamentalist parents while being gay. Yer slamming a door is thought to have triggered the title (*) condition of this book, which is treated by the tall doctors Neil and Peggy. This book describes how qaug dab peg is traditionally treated by a txiv neeb, or shaman, and tells of a family who instead took their daughter to a Merced hospital. For 10 points, name this Anne Fadiman book about the failure of American hospitals to treat Lia Lee, an epileptic Hmong child.",
-      },
-    ],
+        "text": ""
+      }
+    ]
   },
   {
-    type: "answerline",
-    children: [
+    "type": "answerline",
+    "children": [
       {
-            type: "answer-label",  
-            children: [{ text: "" }],
-          },
-      {
-        type: "main-answer",
-        children: [
-          
-          { text: "stuff" }],
+        "type": "answer-label",
+        "children": [
+          {
+            "text": ""
+          }
+        ]
       },
-    ],
-  },
-];
+      {
+        "type": "main-answer",
+        "children": [
+          {
+            "text": " "
+          }
+        ]
+      }
+    ]
+  }
+]
 
 export default SlateEditor;

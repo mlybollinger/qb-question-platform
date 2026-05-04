@@ -33,7 +33,7 @@ const PronunciationGuideDescriptor = {
   },
 };
 
-export const MdxEditor = ({ questionId=null }) => {
+export const MdxEditor = ({ questionId=null, onSubmit }) => {
   const editorRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [questionMarkdown, setQuestionMarkdown] = useState('');
@@ -128,6 +128,9 @@ export const MdxEditor = ({ questionId=null }) => {
         className="mdx-question-editor"
         plugins={plugins}
       />
+      <div class="flex w-full justify-end">
+        <button onClick={onSubmit} class="bg-primary-light w-[20%] border-stroke-light justify-center text-md border- hover:cursor-pointer">Submit</button>
+      </div>
 
 
     </div>

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as questionService from '../services/question.service';
 import { QuestionType, QuestionStatus } from '@prisma/client';
 import { validateTossupFields, validateBonusFields, ValidationErrors } from '../lib/questionValidation';
+import { parseTossup, parseBonus } from '../lib/questionParser';
 
 function runValidation(body: any): ValidationErrors {
   if (body.tossup) {
@@ -41,6 +42,36 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
+  const { rawText, questionType, authorId, categoryId, tournamentId, status } = req.body;
+
+  if (rawText) {
+    if (!questionType) return res.status(400).json({ error: 'questionType is required when rawText is provided' });
+
+    if (questionType === 'tossup') {
+      const parsed = parseTossup(rawText);
+      if (!parsed) return res.status(400).json({ error: 'Failed to parse tossup: expected "...question text...\nANSWER: ...answer..."' });
+      try {
+        const question = await questionService.create({ authorId, categoryId, questionType, tournamentId, status, tossup: parsed });
+        return res.status(201).json(question);
+      } catch (err: any) {
+        return res.status(400).json({ error: err.message });
+      }
+    }
+
+    if (questionType === 'bonus') {
+      const parsed = parseBonus(rawText);
+      if (!parsed) return res.status(400).json({ error: 'Failed to parse bonus: expected "leadin\\n[10e/m/h] text\\nANSWER: answer" × 3' });
+      try {
+        const question = await questionService.create({ authorId, categoryId, questionType, tournamentId, status, bonus: parsed });
+        return res.status(201).json(question);
+      } catch (err: any) {
+        return res.status(400).json({ error: err.message });
+      }
+    }
+
+    return res.status(400).json({ error: 'questionType must be "tossup" or "bonus"' });
+  }
+
   const errors = runValidation(req.body);
   if (Object.keys(errors).length > 0) return res.status(400).json({ errors });
   try {
@@ -70,3 +101,4 @@ export const remove = async (req: Request, res: Response) => {
     res.status(400).json({ error: err.message });
   }
 };
+

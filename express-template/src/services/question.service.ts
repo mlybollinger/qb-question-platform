@@ -21,6 +21,7 @@ export const create = async (data: {
   status?: QuestionStatus;
   tossup?: { questionText: string; answer: string };
   bonus?: {
+    bonusLeadin?: string;
     part1Text: string; part1Answer: string;
     part2Text: string; part2Answer: string;
     part3Text: string; part3Answer: string;
@@ -44,6 +45,7 @@ export const update = async (
     status?: QuestionStatus;
     tossup?: { questionText?: string; answer?: string };
     bonus?: {
+      bonusLeadin?: string;
       part1Text?: string; part1Answer?: string;
       part2Text?: string; part2Answer?: string;
       part3Text?: string; part3Answer?: string;

@@ -105,6 +105,7 @@ model Tossup {
 model Bonus {
   id           Int      @id @default(autoincrement())
   questionId   Int      @unique @map("question_id")
+  bonusLeadin  String?  @map("bonus_leadin")
   part1Text    String   @map("part_1_text")
   part1Answer  String   @map("part_1_answer")
   part2Text    String   @map("part_2_text")

@@ -42,7 +42,7 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const { rawText, questionType, authorId, categoryId, tournamentId, status } = req.body;
+  const { rawText, questionType, authorId, categoryId, tournamentId } = req.body;
 
   if (rawText) {
     if (!questionType) return res.status(400).json({ error: 'questionType is required when rawText is provided' });
@@ -51,7 +51,7 @@ export const create = async (req: Request, res: Response) => {
       const parsed = parseTossup(rawText);
       if (!parsed) return res.status(400).json({ error: 'Failed to parse tossup: expected "...question text...\nANSWER: ...answer..."' });
       try {
-        const question = await questionService.create({ authorId, categoryId, questionType, tournamentId, status, tossup: parsed });
+        const question = await questionService.create({ authorId, categoryId, questionType, tournamentId, tossup: parsed });
         return res.status(201).json(question);
       } catch (err: any) {
         return res.status(400).json({ error: err.message });
@@ -62,7 +62,7 @@ export const create = async (req: Request, res: Response) => {
       const parsed = parseBonus(rawText);
       if (!parsed) return res.status(400).json({ error: 'Failed to parse bonus: expected "leadin\\n[10e/m/h] text\\nANSWER: answer" × 3' });
       try {
-        const question = await questionService.create({ authorId, categoryId, questionType, tournamentId, status, bonus: parsed });
+        const question = await questionService.create({ authorId, categoryId, questionType, tournamentId, bonus: parsed });
         return res.status(201).json(question);
       } catch (err: any) {
         return res.status(400).json({ error: err.message });

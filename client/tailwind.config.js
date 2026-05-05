@@ -26,6 +26,7 @@ module.exports = {
         "status-red": "var(--light-red)",
         "status-blue": "var(--light-blue)",
         "status-green": "var(--light-green)",
+        subtitle: "var(--subtitle-color)",
       },
       fontFamily: {
         heading: ["var(--heading-font)"],

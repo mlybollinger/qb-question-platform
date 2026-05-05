@@ -7,6 +7,9 @@ import {
   UndoRedo,
   Separator,
   jsxPlugin,
+   NestedLexicalEditor, 
+   JsxComponentDescriptor 
+
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import './slateEditor.css';
@@ -33,10 +36,10 @@ const PronunciationGuideDescriptor = {
   },
 };
 
-export const MdxEditor = ({ questionId=null, onSubmit }) => {
+export const MdxEditor = ({ questionId=null, onSubmit, value, setValue }) => {
   const editorRef = useRef(null);
   const [loading, setLoading] = useState(true);
-  const [questionMarkdown, setQuestionMarkdown] = useState('');
+  const [answer, setAnswer] = useState("");
 
     useEffect(() => {
     if (questionId) {
@@ -49,7 +52,7 @@ export const MdxEditor = ({ questionId=null, onSubmit }) => {
         })
         .then((question) => {
           if (question.tossup) {
-            setQuestionMarkdown(question.tossup.questionText + "\nANSWER: " + question.tossup.answer || '');
+            setValue(question.tossup.questionText + "\nANSWER: " + question.tossup.answer || '');
           }
         })
         .catch((err) => console.error('Failed to load question:', err))
@@ -64,7 +67,7 @@ export const MdxEditor = ({ questionId=null, onSubmit }) => {
   
 
   const charCount =
-    questionMarkdown
+    value
       .replace(/\*\*/g, '')
       .replace(/\*/g, '')
       .replace(/_/g, '')
@@ -119,19 +122,32 @@ export const MdxEditor = ({ questionId=null, onSubmit }) => {
           <span>Characters: {charCount}</span>
         </div>
       </div>
+      <div className="content-container">
 
-      <MDXEditor
-        ref={editorRef}
-        markdown={questionMarkdown}
-        onChange={setQuestionMarkdown}
-        placeholder="Write a question…"
-        className="mdx-question-editor"
-        plugins={plugins}
-      />
-      <div class="flex w-full justify-end">
-        <button onClick={onSubmit} class="bg-primary-light w-[20%] border-stroke-light justify-center text-md border- hover:cursor-pointer">Submit</button>
+        <MDXEditor
+          ref={editorRef}
+          markdown={value}
+          onChange={setValue}
+          placeholder="Write a question…"
+          className="mdx-question-editor"
+          plugins={plugins}
+        />
+        <div class="flex w-full items-center gap-1 border-[1px] rounded-b-sm border-solid border-stroke-light border-t-0 max-w-[783px] px-2">
+        <span className="bg-stroke-light p-1">ANSWER: </span>
+        <MDXEditor
+          markdown={answer}
+          onChange={setAnswer}
+          plugins={[]}
+          placeholder=" "
+          className='mdx-answer-editor'
+          >
+          </MDXEditor>
+        </div>
       </div>
+      <div class="flex w-[800px] justify-end">
+      <button onClick={onSubmit} class="bg-primary-light w-[20%] border-stroke-light justify-center text-md border- hover:cursor-pointer">Submit</button>
 
+      </div>
 
     </div>
   );

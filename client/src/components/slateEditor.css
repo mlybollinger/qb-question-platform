@@ -31,7 +31,11 @@ pre {
 .mdx-question-editor .mdxeditor-toolbar {
   border-bottom: 1px solid var(--light-line-color);
   background-color: var(--light-background, #f9f9f9);
-  max-width: 900px
+  max-width: 800px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 3px;
+  border-top-left-radius: 3px;
 }
 
 .mdx-question-editor [contenteditable="true"] {
@@ -43,7 +47,8 @@ pre {
 }
 
 .mdx-answer-editor  {
-
+  font-family: "Times New Roman", Times, serif;
+  line-height: 24px;
   border-bottom-left-radius: 4px;
   border-bottom-right-radius: 4px;
   width: stretch;
@@ -51,6 +56,10 @@ pre {
 
 
 .mdx-answer-editor p {
+  margin: 0 !important
+}
+
+.mdx-question-editor p {
   margin: 0 !important
 }
 
@@ -73,6 +82,8 @@ accept {
   font-weight: 300;
   font-family: var(--body-font);
   color: var(--light-font-color);
+  max-width: 800px;
+  
 }
 
 .editor-toolbar-buttons {

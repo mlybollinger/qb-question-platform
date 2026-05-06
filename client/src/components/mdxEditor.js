@@ -40,9 +40,10 @@ export const MdxEditor = ({ questionId=null, onSubmit, value, setValue }) => {
   const editorRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [answer, setAnswer] = useState("");
+  const hasExistingQuestion = !!questionId
 
     useEffect(() => {
-    if (questionId) {
+    if (hasExistingQuestion) {
 
 
       fetch(`/api/questions/${questionId}`)
@@ -52,7 +53,8 @@ export const MdxEditor = ({ questionId=null, onSubmit, value, setValue }) => {
         })
         .then((question) => {
           if (question.tossup) {
-            setValue(question.tossup.questionText + "\nANSWER: " + question.tossup.answer || '');
+            setValue(question.tossup.questionText);
+            setAnswer(question.tossup.answer);
           }
         })
         .catch((err) => console.error('Failed to load question:', err))
@@ -132,20 +134,24 @@ export const MdxEditor = ({ questionId=null, onSubmit, value, setValue }) => {
           className="mdx-question-editor"
           plugins={plugins}
         />
-        <div class="flex w-full items-center gap-1 border-[1px] rounded-b-sm border-solid border-stroke-light border-t-0 max-w-[783px] px-2">
-        <span className="bg-stroke-light p-1">ANSWER: </span>
+        <div class="flex w-full items-center border-[1px] rounded-b-sm box-border border-solid border-stroke-light border-t-0 max-w-[800px]">
+        <div className=" pl-2">
+          <span className = "p-1 bg-stroke-light">ANSWER: </span>
+        </div>
         <MDXEditor
           markdown={answer}
           onChange={setAnswer}
           plugins={[]}
-          placeholder=" "
+          placeholder=""
           className='mdx-answer-editor'
           >
           </MDXEditor>
         </div>
       </div>
       <div class="flex w-[800px] justify-end">
-      <button onClick={onSubmit} class="bg-primary-light w-[20%] border-stroke-light justify-center text-md border- hover:cursor-pointer">Submit</button>
+      <button onClick={() => onSubmit(value, answer)} class="bg-primary-light w-[20%] border-stroke-light justify-center text-md border- hover:cursor-pointer">
+        { hasExistingQuestion ? "Save" : "Submit" }
+      </button>
 
       </div>
 

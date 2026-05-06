@@ -6,14 +6,16 @@ export default function QuestionWriter() {
   const navigate = useNavigate();
   const [text, setText] = useState("")
 
-  const submitQuestion = async () => {
+  const submitQuestion = async (question, answer) => {
+    console.log("Question: ", question);
+    console.log("Answer: ", answer);
     await fetch(`/api/questions/`, {
       method: 'POST',
       body: JSON.stringify({ authorId: 1, 
         tournamentId: 1,
         categoryId: 1,
         questionType: "tossup",
-        rawText: text }),
+        rawText: question + "\nANSWER: " + answer }),
       headers: { 'Content-Type': 'application/json'}
     })
     .then(async (res) => {

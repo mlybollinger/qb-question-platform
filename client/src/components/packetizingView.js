@@ -5,8 +5,6 @@ import _ from "lodash";
 import { Draggable } from "./dnd/draggable";
 import { Droppable } from "./dnd/droppable";
 
-import styles from "./dnd/dnd.module.css";
-
 export default function Packetizing() {
   const questionData = require("./sample-all-questions.json");
   const questions = [...Array(20).keys()];
@@ -17,7 +15,7 @@ export default function Packetizing() {
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <table className={styles.packetTable}>
+      <table>
         <thead>
           <tr>
             {packets.map((num) => (

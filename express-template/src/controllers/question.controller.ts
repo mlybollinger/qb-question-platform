@@ -12,13 +12,9 @@ function runValidation(body: any): ValidationErrors {
     }
   }
   if (body.bonus) {
-    const { part1Answer, part2Answer, part3Answer } = body.bonus;
-    if (part1Answer !== undefined || part2Answer !== undefined || part3Answer !== undefined) {
-      return validateBonusFields({
-        part1Answer: part1Answer ?? '',
-        part2Answer: part2Answer ?? '',
-        part3Answer: part3Answer ?? '',
-      });
+    const { parts } = body.bonus;
+    if (Array.isArray(parts) && parts.some((p: any) => p.answer !== undefined)) {
+      return validateBonusFields({ parts: parts.map((p: any) => ({ answer: p.answer ?? '' })) });
     }
   }
   return {};

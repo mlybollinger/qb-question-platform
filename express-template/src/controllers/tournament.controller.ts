@@ -38,3 +38,12 @@ export const remove = async (req: Request, res: Response) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+export const getCategoryTree = async (req: Request, res: Response) => {
+  try {
+    const tree = await tournamentService.assembleQuestionTree(parseInt(req.params.id));
+    res.json(tree);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+}

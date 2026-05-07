@@ -8,5 +8,6 @@ router.get('/:id', tournamentController.getById);
 router.post('/', tournamentController.create);
 router.put('/:id', tournamentController.update);
 router.delete('/:id', tournamentController.remove);
+router.get('/:id/categoryTree', tournamentController.getCategoryTree)
 
 export default router;

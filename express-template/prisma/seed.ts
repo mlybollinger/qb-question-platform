@@ -63,6 +63,7 @@ async function main() {
   // ── Clear in dependency order ─────────────────────────────────────────────
   await prisma.packetQuestion.deleteMany();
   await prisma.packet.deleteMany();
+  await prisma.bonusPart.deleteMany();
   await prisma.bonus.deleteMany();
   await prisma.tossup.deleteMany();
   await prisma.question.deleteMany();
@@ -224,12 +225,13 @@ async function main() {
         bonus: {
           create: {
             bonusLeadin: b.bonusLeadin,
-            part1Text: b.part1Text,
-            part1Answer: b.part1Answer,
-            part2Text: b.part2Text,
-            part2Answer: b.part2Answer,
-            part3Text: b.part3Text,
-            part3Answer: b.part3Answer,
+            parts: {
+              create: b.parts.map(p => ({
+                partNumber: p.partNumber,
+                text: p.text,
+                answer: p.answer,
+              })),
+            },
           },
         },
       },

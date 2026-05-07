@@ -7,8 +7,7 @@ export default function QuestionWriter() {
   const [text, setText] = useState("")
 
   const submitQuestion = async (question, answer) => {
-    console.log("Question: ", question);
-    console.log("Answer: ", answer);
+
     await fetch(`/api/questions/`, {
       method: 'POST',
       body: JSON.stringify({ authorId: 1, 

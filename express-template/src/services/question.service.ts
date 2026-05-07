@@ -1,16 +1,23 @@
 import prisma from '../lib/prisma';
 import { QuestionType, QuestionStatus } from '@prisma/client';
 
+const questionInclude = {
+  tossup: true,
+  bonus: { include: { parts: true } },
+  author: { select: { id: true, username: true } },
+  category: true,
+} as const;
+
 export const getAll = (filters?: { tournamentId?: number; authorId?: number; questionType?: QuestionType; status?: QuestionStatus }) =>
   prisma.question.findMany({
     where: filters,
-    include: { tossup: true, bonus: true, author: { select: { id: true, username: true } }, category: true },
+    include: questionInclude,
   });
 
 export const getById = (id: number) =>
   prisma.question.findUnique({
     where: { id },
-    include: { tossup: true, bonus: true, author: { select: { id: true, username: true } }, category: true },
+    include: questionInclude,
   });
 
 export const create = async (data: {
@@ -22,9 +29,7 @@ export const create = async (data: {
   tossup?: { questionText: string; answer: string };
   bonus?: {
     bonusLeadin?: string;
-    part1Text: string; part1Answer: string;
-    part2Text: string; part2Answer: string;
-    part3Text: string; part3Answer: string;
+    parts: { partNumber: number; text: string; answer: string }[];
   };
 }) => {
   const { tossup, bonus, ...questionData } = data;
@@ -32,9 +37,14 @@ export const create = async (data: {
     data: {
       ...questionData,
       tossup: tossup ? { create: tossup } : undefined,
-      bonus: bonus ? { create: bonus } : undefined,
+      bonus: bonus ? {
+        create: {
+          bonusLeadin: bonus.bonusLeadin,
+          parts: { create: bonus.parts },
+        },
+      } : undefined,
     },
-    include: { tossup: true, bonus: true },
+    include: questionInclude,
   });
 };
 
@@ -46,9 +56,7 @@ export const update = async (
     tossup?: { questionText?: string; answer?: string };
     bonus?: {
       bonusLeadin?: string;
-      part1Text?: string; part1Answer?: string;
-      part2Text?: string; part2Answer?: string;
-      part3Text?: string; part3Answer?: string;
+      parts?: { partNumber: number; text: string; answer: string }[];
     };
   }
 ) => {
@@ -58,9 +66,17 @@ export const update = async (
     data: {
       ...questionData,
       tossup: tossup ? { update: tossup } : undefined,
-      bonus: bonus ? { update: bonus } : undefined,
+      bonus: bonus ? {
+        update: {
+          bonusLeadin: bonus.bonusLeadin,
+          parts: bonus.parts ? {
+            deleteMany: {},
+            create: bonus.parts,
+          } : undefined,
+        },
+      } : undefined,
     },
-    include: { tossup: true, bonus: true },
+    include: questionInclude,
   });
 };
 

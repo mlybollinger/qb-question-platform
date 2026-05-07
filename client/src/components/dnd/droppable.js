@@ -1,6 +1,5 @@
 import React from "react";
 import { useDroppable } from "@dnd-kit/core";
-import styles from "./dnd.module.css";
 
 export function Droppable(props) {
   const { isOver, setNodeRef } = useDroppable({
@@ -12,12 +11,12 @@ export function Droppable(props) {
 
   return (
     <td
-      className={styles.questionSlot}
+      className="w-[200px] p-2 border border-stroke-light"
       ref={setNodeRef}
       style={style}
       id={props.id}
     >
-      <div className={styles.questionDiv}>{props.children}</div>
+      <div className="flex items-center gap-2">{props.children}</div>
     </td>
   );
 }

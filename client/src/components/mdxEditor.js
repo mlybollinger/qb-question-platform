@@ -7,8 +7,8 @@ import {
   UndoRedo,
   Separator,
   jsxPlugin,
-   NestedLexicalEditor, 
-   JsxComponentDescriptor 
+   NestedLexicalEditor,
+   JsxComponentDescriptor
 
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
@@ -44,8 +44,6 @@ export const MdxEditor = ({ questionId=null, onSubmit, value, setValue }) => {
 
     useEffect(() => {
     if (hasExistingQuestion) {
-
-
       fetch(`/api/questions/${questionId}`)
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -63,10 +61,6 @@ export const MdxEditor = ({ questionId=null, onSubmit, value, setValue }) => {
         setLoading(false);
       };
   }, [])
-
-
-
-  
 
   const charCount =
     value
@@ -111,21 +105,20 @@ export const MdxEditor = ({ questionId=null, onSubmit, value, setValue }) => {
     []
   );
 
-  if (loading) return <div className="editor-container">Loading…</div>;
+  if (loading) return <div className="flex flex-col gap-2 w-[80%] max-w-[1000px]">Loading…</div>;
 
   return (
-    <div className="editor-container">
-      <div className="editor-toolbar">
-        <div className="editor-toolbar-buttons">
-          <button className="editor-toolbar-copy-question">Copy Question</button>
-          <button className="editor-toolbar-delete-question">Delete</button>
+    <div className="flex flex-col gap-2 w-[80%] max-w-[1000px]">
+      <div className="flex flex-row justify-between items-end gap-4 font-light font-body text-ink-faint max-w-[800px]">
+        <div className="flex gap-3">
+          <button className="bg-canvas border-stroke-light">Copy Question</button>
+          <button className="bg-danger-bg text-danger-dark border-danger-border">Delete</button>
         </div>
-        <div className="editor-toolbar-question-length">
+        <div className="flex justify-end gap-2">
           <span>Characters: {charCount}</span>
         </div>
       </div>
-      <div className="content-container">
-
+      <div className="flex flex-col w-[80%] max-w-[900px]">
         <MDXEditor
           ref={editorRef}
           markdown={value}
@@ -134,27 +127,27 @@ export const MdxEditor = ({ questionId=null, onSubmit, value, setValue }) => {
           className="mdx-question-editor"
           plugins={plugins}
         />
-        <div class="flex w-full items-center border-[1px] rounded-b-sm box-border border-solid border-stroke-light border-t-0 max-w-[800px]">
-        <div className=" pl-2">
-          <span className = "p-1 bg-stroke-light">ANSWER: </span>
-        </div>
-        <MDXEditor
-          markdown={answer}
-          onChange={setAnswer}
-          plugins={[]}
-          placeholder=""
-          className='mdx-answer-editor'
-          >
-          </MDXEditor>
+        <div className="flex w-full items-center border border-solid border-stroke-light rounded-b-sm box-border border-t-0 max-w-[800px]">
+          <div className="pl-2">
+            <span className="p-1 bg-stroke-light">ANSWER: </span>
+          </div>
+          <MDXEditor
+            markdown={answer}
+            onChange={setAnswer}
+            plugins={[]}
+            placeholder=""
+            className='mdx-answer-editor'
+          />
         </div>
       </div>
-      <div class="flex w-[800px] justify-end">
-      <button onClick={() => onSubmit(value, answer)} class="bg-primary-light w-[20%] border-stroke-light justify-center text-md border- hover:cursor-pointer">
-        { hasExistingQuestion ? "Save" : "Submit" }
-      </button>
-
+      <div className="flex w-[800px] justify-end">
+        <button
+          onClick={() => onSubmit(value, answer)}
+          className="bg-primary-light w-[20%] border-stroke-light justify-center text-md hover:cursor-pointer"
+        >
+          { hasExistingQuestion ? "Save" : "Submit" }
+        </button>
       </div>
-
     </div>
   );
 };

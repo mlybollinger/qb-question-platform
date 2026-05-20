@@ -47,3 +47,22 @@ export const getCategoryTree = async (req: Request, res: Response) => {
     res.status(400).json({ error: err.message });
   }
 }
+
+export const getCategories = async (req: Request, res: Response) => {
+  try {
+    const categories = await tournamentService.getCategories(parseInt(req.params.id));
+    res.json(categories);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+export const getDistro = async (req: Request, res: Response) => {
+  try {
+    const distro = await tournamentService.getDistro(parseInt(req.params.id));
+    res.json(distro);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message })
+  }
+  
+}

@@ -33,6 +33,7 @@ export const create = async (data: {
   };
 }) => {
   const { tossup, bonus, ...questionData } = data;
+
   return prisma.question.create({
     data: {
       ...questionData,

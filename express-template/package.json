@@ -6,7 +6,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "db:up": "docker run --name qb_pg -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=qb_platform -p 5432:5432 -d postgres:16",
+    "db:down": "docker stop qb_pg && docker rm qb_pg"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",

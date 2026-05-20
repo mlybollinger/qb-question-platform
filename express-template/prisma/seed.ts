@@ -70,15 +70,15 @@ async function main() {
   await prisma.$executeRaw`ALTER SEQUENCE tossup_id_seq RESTART WITH 1`;
   await prisma.$executeRaw`ALTER SEQUENCE question_id_seq RESTART WITH 1`;
   await prisma.tournamentRoleAssignment.deleteMany();
-  await prisma.packetDistributionConstraints.deleteMany();
+  await prisma.tournamentCategory.deleteMany();
   await prisma.tournament.deleteMany();
-  await prisma.categoryRelation.deleteMany();
   await prisma.category.deleteMany();
   await prisma.user.deleteMany();
 
   // ── User ──────────────────────────────────────────────────────────────────
   const user = await prisma.user.create({
     data: {
+      id: 1,
       firstName: 'Demo',
       lastName: 'Writer',
       username: 'demo',
@@ -117,15 +117,18 @@ async function main() {
   };
 
   const cats: Record<string, number> = {};
-  for (const name of Object.keys(categoryTree)) {
-    const c = await prisma.category.create({ data: { name } });
-    cats[name] = c.id;
-  }
-  for (const [child, parent] of Object.entries(categoryTree)) {
+  
+  for (const [name, parent] of Object.entries(categoryTree)) {
     if (parent) {
-      await prisma.categoryRelation.create({
-        data: { childCategoryId: cats[child], parentCategoryId: cats[parent] },
+      const cat = await prisma.category.create({
+        data: { name, parentId: cats[parent] },
       });
+      cats[name] = cat.id;
+    } else {
+      const cat = await prisma.category.create({
+        data: { name },
+      });
+      cats[name] = cat.id;
     }
   }
 
@@ -136,13 +139,13 @@ async function main() {
       numberOfPackets: 14,
       questionsPerPacket: 20,
       distribution: {
-        Literature: ['American Literature', 'British Literature', 'European Literature', 'World Literature'],
-        History: ['American History', 'European History', 'World History', 'Other History'],
-        Science: ['Biology', 'Chemistry', 'Physics', 'Other Science'],
-        RMP: ['Religion', 'Mythology', 'Philosophy'],
-        Arts: ['Painting/Sculpture', 'Classical Music', 'Other Fine Arts'],
-        'Social Science': ['Social Science'],
-        Other: ['Other'],
+        Literature: { 'American Literature': 1, 'British Literature': 1, 'European Literature': 1, 'World Literature': 1 },
+        History: {'American History': 1, 'European History': 1, 'World History': 1, 'Other History': 1 },
+        Science: {'Biology': 1, 'Chemistry': 1, 'Physics': 1, 'Other Science': 1 },
+        RMP: {'Religion': 1, 'Mythology': 1, 'Philosophy': 1},
+        Arts: {'Painting/Sculpture': 1, 'Classical Music': 1, 'Other Fine Arts': 1},
+        'Social Science': {'Social Science': 1 },
+        Other: {'Other': 1 },
       },
     },
   });
@@ -153,13 +156,26 @@ async function main() {
     .map(([name]) => name);
   const uniqueLeaves = [...new Set([...leafCategories, 'Social Science', 'Other'])];
 
-  for (const name of uniqueLeaves) {
-    for (const qType of ['tossup', 'bonus'] as const) {
-      await prisma.packetDistributionConstraints.create({
-        data: { tournamentId: tournament.id, categoryId: cats[name], questionType: qType, numQuestions: 1 },
+const parentCategories = Object.entries(categoryTree)
+    .filter(([, parent]) => parent === null)
+    .map(([name]) => name);
+  for (const [index, name] of uniqueLeaves.entries()) {
+     {
+      await prisma.tournamentCategory.create({
+        data: { tournamentId: tournament.id, categoryId: cats[name], numTossups: 1, numBonuses: 1, displayOrder: index},
       });
     }
   }
+
+  for (const [index, name] of parentCategories.entries()) {
+     {
+      await prisma.tournamentCategory.create({
+        data: { tournamentId: tournament.id, categoryId: cats[name], displayOrder: index},
+      });
+    }
+  } 
+
+  
 
   // ── Packets ───────────────────────────────────────────────────────────────
   for (let i = 1; i <= 14; i++) {
@@ -197,7 +213,7 @@ async function main() {
   for (const t of parsedTossups) {
     const q = await prisma.question.create({
       data: {
-        authorId: user.id,
+        authorId: user.id ?? 1,
         categoryId: cats[t.category],
         questionType: 'tossup',
         tournamentId: tournament.id,
@@ -218,7 +234,7 @@ async function main() {
   for (const b of parsedBonuses) {
     const q = await prisma.question.create({
       data: {
-        authorId: user.id,
+        authorId: user.id ?? 1,
         categoryId: cats[b.category],
         questionType: 'bonus',
         tournamentId: tournament.id,

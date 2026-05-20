@@ -26,21 +26,40 @@ export function parseTossup(raw: string): ParsedTossup | null {
 }
 
 export function parseBonus(raw: string): ParsedBonus | null {
-  let pattern = '(?<bonus_leadin>.*)\\n';
-  for (let i = 1; i <= 3; i++) {
-    pattern += `(?<part_${i}_text>\\[10[emh]\\] .*)\\nANSWER: (?<part_${i}_answer>.*)`;
-    if (i < 3) pattern += '\\n';
+
+  let lastIndex = 0;
+  const data: Partial<ParsedBonus> = { }
+  const leadinPattern = /(?<bonus_leadin>.*)/y
+  const leadin = leadinPattern.exec(raw);
+  if (!leadin) {
+    throw new Error("Bonus leadin not found");
   }
-  const regex = new RegExp(`^${pattern}$`);
-  const match = raw.trim().match(regex);
-  if (!match?.groups) return null;
-  const g = match.groups;
-  return {
-    bonusLeadin: g.bonus_leadin,
-    parts: [1, 2, 3].map(i => ({
+
+  data['bonusLeadin'] = leadin[1];
+  lastIndex = leadinPattern.lastIndex;
+  const partPattern = /\n(?<part_text>\[10[emh]\] .*)/y
+  const answerPattern = /\nANSWER: (?<answerline>.*)/y
+  
+  data['parts'] = [];
+  for (let i = 1; i <= 3; i++) {
+    partPattern.lastIndex = lastIndex;
+    const bonusPart = partPattern.exec(raw);
+    if (!bonusPart) {
+      throw new Error(`Error parsing bonus: error in part ${i} text`);
+    }
+    answerPattern.lastIndex = partPattern.lastIndex;
+    const partAnswer = answerPattern.exec(raw);
+    
+    if (!partAnswer) {
+      throw new Error(`Error parsing bonus: error in part ${i} answer`);
+    }
+    lastIndex = answerPattern.lastIndex;
+    data['parts'].push({ 
       partNumber: i,
-      text: g[`part_${i}_text`],
-      answer: g[`part_${i}_answer`],
-    })),
-  };
+      text: bonusPart[1],
+      answer: partAnswer[1]
+    })
+  }
+
+  return data as ParsedBonus;
 }

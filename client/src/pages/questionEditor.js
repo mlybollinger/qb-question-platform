@@ -7,6 +7,7 @@ export default function QuestionEditor() {
 
   const [text, setText] = useState("")
 
+
   return (
     <>
       <h1>Write a Question</h1>

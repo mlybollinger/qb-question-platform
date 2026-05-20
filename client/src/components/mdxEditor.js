@@ -7,13 +7,14 @@ import {
   UndoRedo,
   Separator,
   jsxPlugin,
-   NestedLexicalEditor,
-   JsxComponentDescriptor
+
 
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import './slateEditor.css';
-import { FaPlus, FaTimes } from 'react-icons/fa';
+import { ComboBox } from './select/Combobox';
+import { SelectComponent } from "./select/Select";
+
 
 const PronunciationGuideDescriptor = {
   name: 'PronunciationGuide',
@@ -36,11 +37,15 @@ const PronunciationGuideDescriptor = {
   },
 };
 
-export const MdxEditor = ({ questionId=null, onSubmit, value, setValue }) => {
+export const MdxEditor = ({ questionId=null, onSubmit, value, setValue, mode }) => {
   const editorRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [answer, setAnswer] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const hasExistingQuestion = !!questionId
+  const [status, setStatus] = useState(null);
+  const statuses = ["written", "edited", "proofread"]
 
     useEffect(() => {
     if (hasExistingQuestion) {
@@ -51,16 +56,33 @@ export const MdxEditor = ({ questionId=null, onSubmit, value, setValue }) => {
         })
         .then((question) => {
           if (question.tossup) {
-            setValue(question.tossup.questionText);
+            setValue(question.tossup.questionText + "\nANSWER: " + question.tossup.answer);
             setAnswer(question.tossup.answer);
+          } else if (question.bonus) {
+            const text = question.bonus.bonusLeadin + "\n" + question.bonus.parts.reduce((prev, current, index) => {
+              return prev + current.text + "\nANSWER: " + current.answer + "\n"
+            }, "")
+            setValue(text);
           }
+          setSelectedCategory(question.category)
+          setStatus(question.status)
         })
         .catch((err) => console.error('Failed to load question:', err))
         .finally(() => setLoading(false));
       } else {
         setLoading(false);
       };
+
+      
   }, [])
+
+
+  useEffect(() => {
+    fetch(`/api/tournaments/1/categories`)
+      .then((res) => { return res.json() })
+      .then((cats) => setCategories(cats));
+  }, [])
+
 
   const charCount =
     value
@@ -118,36 +140,33 @@ export const MdxEditor = ({ questionId=null, onSubmit, value, setValue }) => {
           <span>Characters: {charCount}</span>
         </div>
       </div>
-      <div className="flex flex-col w-[80%] max-w-[900px]">
+      <div className="flex flex-col max-w-[800px]">
         <MDXEditor
           ref={editorRef}
           markdown={value}
           onChange={setValue}
-          placeholder="Write a question…"
-          className="mdx-question-editor"
+          placeholder=""
+          className="mdx-question-editor min-h-[200px]"
           plugins={plugins}
         />
-        <div className="flex w-full items-center border border-solid border-stroke-light rounded-b-sm box-border border-t-0 max-w-[800px]">
-          <div className="pl-2">
-            <span className="p-1 bg-stroke-light">ANSWER: </span>
-          </div>
-          <MDXEditor
-            markdown={answer}
-            onChange={setAnswer}
-            plugins={[]}
-            placeholder=""
-            className='mdx-answer-editor'
-          />
-        </div>
+
       </div>
-      <div className="flex w-[800px] justify-end">
+      <div className="flex max-w-[800px] justify-between">
+        <div class="flex gap-1">Category: <ComboBox options={categories} selected={selectedCategory} setSelected={setSelectedCategory}></ComboBox></div>
+        
         <button
-          onClick={() => onSubmit(value, answer)}
-          className="bg-primary-light w-[20%] border-stroke-light justify-center text-md hover:cursor-pointer"
+          onClick={() => onSubmit(value, selectedCategory.id)}
+          className="bg-primary-light w-[160px] border-stroke-light justify-center text-md hover:cursor-pointer"
         >
           { hasExistingQuestion ? "Save" : "Submit" }
         </button>
+       
       </div>
+      {hasExistingQuestion && <div className="flex items-center gap-2">
+       {"Status: "}
+      <SelectComponent options={statuses} value={status} setValue={setStatus}></SelectComponent>
+        </div>
+  }
     </div>
   );
 };

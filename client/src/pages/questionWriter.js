@@ -1,34 +1,49 @@
 import MdxEditor from "../components/mdxEditor";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { TabGroup } from "@/components/select/TabGroup"
+import { toast } from "react-toastify";
 
 export default function QuestionWriter() {
   const navigate = useNavigate();
   const [text, setText] = useState("")
+  const [selectedTab, setSelectedTab] = useState(0);
 
-  const submitQuestion = async (question, answer) => {
+  const tabs = [{ id: 0, name: "Tossup"}, { id: 1, name: "Bonus" }]
 
+  const submitQuestion = async (question, categoryId) => {
+
+    const questionText = question.replace(/\n\n/g, "\n")
+      .replace(/\\\[/g, '[')
+      .replace(/\\\]/g, ']')
+    
     await fetch(`/api/questions/`, {
       method: 'POST',
       body: JSON.stringify({ authorId: 1, 
         tournamentId: 1,
-        categoryId: 1,
-        questionType: "tossup",
-        rawText: question + "\nANSWER: " + answer }),
+        categoryId: categoryId,
+        questionType: selectedTab === 0 ? "tossup" : "bonus",
+        rawText: questionText }),
       headers: { 'Content-Type': 'application/json'}
     })
     .then(async (res) => {
-      if (!res.ok) throw new Error(`Error submitting question`);
-
-      const response = await res.json();
-      navigate(`/editor/${response.id}`)
+      if (!res.ok) {
+        const response = await res.json();
+        toast.error(`Error submitting question: ${response.error}`);
+      } else {
+        const response = await res.json();
+        navigate(`/editor/${response.id}`)
+      }
     })
   }
 
+
+
   return (
     <>
-      <h1>Write a Question</h1>
-      <MdxEditor onSubmit={submitQuestion} value={text} setValue={setText}/>
+      <TabGroup className="pb-4" tabs={tabs} selected={selectedTab} setSelection={setSelectedTab}></TabGroup>
+
+      <MdxEditor onSubmit={submitQuestion} value={text} setValue={setText} mode={tabs[selectedTab].name}/>
     </>
   );
 }

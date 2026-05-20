@@ -11,6 +11,8 @@ import QuestionEditor from "./pages/questionEditor";
 import AllQuestions from "./components/allQuestions";
 import MdxEditor from "./components/mdxEditor";
 import Packetizing from "./components/packetizingView";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css'
 
 function Home() {
   return <span>kems</span>;
@@ -52,6 +54,7 @@ function App() {
             </Routes>
           </div>
           <Sidebar isOpen={sidebarOpen} toggleSidebar={handleViewSidebar} />
+          <ToastContainer/>
         </div>
       </Router>
     </>

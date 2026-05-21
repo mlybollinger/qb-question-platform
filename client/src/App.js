@@ -1,22 +1,16 @@
 import React from "react";
-import { useState } from "react";
 import "./global.css";
-// import Editor from "./components/editor";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/navbar";
-import Sidebar from "./components/sidebar";
 import SetAdmin from "./pages/setAdmin";
 import QuestionWriter from "./pages/questionWriter";
 import QuestionEditor from "./pages/questionEditor";
 import AllQuestions from "./components/allQuestions";
-import MdxEditor from "./components/mdxEditor";
 import Packetizing from "./components/packetizingView";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css'
-
-function Home() {
-  return <span>kems</span>;
-}
+import Home from "./pages/home";
+import SetOverview from "./pages/setOverview";
 
 function NoMatch() {
   return (
@@ -27,11 +21,26 @@ function NoMatch() {
   );
 }
 
+function TournamentLayout() {
+  return (
+    <div className="flex w-full">
+      <Navbar />
+      <div className="flex-auto overflow-x-auto py-4 px-8">
+        <Routes>
+          <Route path="editor" element={<QuestionWriter />} />
+          <Route path="editor/:questionId" element={<QuestionEditor />} />
+          <Route path="all-questions" element={<AllQuestions />} />
+          <Route path="set-admin" element={<SetAdmin />} />
+          <Route path="packetizing" element={<Packetizing />} />
+          <Route path="set-overview" element={<SetOverview />} />
+          <Route path="*" element={<NoMatch />} />
+        </Routes>
+      </div>
+    </div>
+  );
+}
+
 function App() {
-  const [sidebarOpen, setSideBarOpen] = useState(true);
-  const handleViewSidebar = () => {
-    setSideBarOpen(!sidebarOpen);
-  };
   return (
     <>
       <style>
@@ -39,23 +48,12 @@ function App() {
         url('https://fonts.googleapis.com/css2?family=Geologica:wght,SHRP@100,0;300,0;400,100;700,0&display=swap');
       </style>
       <Router>
-        <div className="flex w-full">
-          <Navbar />
-          <div className="flex-auto overflow-x-auto py-4 px-8">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/editor" element={<QuestionWriter />} />
-              <Route path="/editor/:questionId" element={<QuestionEditor />} />
-              <Route path="/all-questions" element={<AllQuestions />} />
-              <Route path="/set-admin" element={<SetAdmin />} />
-              <Route path="/slate" element={<MdxEditor />} />
-              <Route path="/packetizing" element={<Packetizing />} />
-              <Route path="*" element={<NoMatch />} />
-            </Routes>
-          </div>
-          <Sidebar isOpen={sidebarOpen} toggleSidebar={handleViewSidebar} />
-          <ToastContainer/>
-        </div>
+        <ToastContainer />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/tournament/:tournamentId/*" element={<TournamentLayout />} />
+          <Route path="*" element={<NoMatch />} />
+        </Routes>
       </Router>
     </>
   );

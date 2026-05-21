@@ -1,9 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { FaBell, FaChevronDown } from "react-icons/fa";
 
 const setName = "2023 Chicago Open";
 
 export default function Navbar() {
+  const { tournamentId } = useParams();
+  const t = `/tournament/${tournamentId}`;
   return (
     <nav className="flex flex-col bg-transparent flex-1 max-w-[300px] min-w-[200px] border-0 border-r border-solid border-stroke">
       <div
@@ -31,22 +33,22 @@ export default function Navbar() {
         </Link>
         <li className="text-primary underline-offset-[0.25em] py-2 px-4 font-body">Writing</li>
         <ul className="flex flex-col list-none pl-4">
-          <Link to="/editor" className="text-primary underline-offset-[0.25em] py-2 pr-4 pl-2">
+          <Link to={`${t}/editor`} className="text-primary underline-offset-[0.25em] py-2 pr-4 pl-2">
             Question Writer
           </Link>
-          <Link to="/all-questions" className="text-primary underline-offset-[0.25em] py-2 pr-4 pl-2">
+          <Link to={`${t}/all-questions`} className="text-primary underline-offset-[0.25em] py-2 pr-4 pl-2">
             All Questions
           </Link>
         </ul>
         <li className="text-primary underline-offset-[0.25em] py-2 px-4 font-body">Editing</li>
         <ul className="flex flex-col list-none pl-4">
-          <Link to="/editor" className="text-primary underline-offset-[0.25em] py-2 pr-4 pl-2">
+          <Link to={`${t}/set-overview`} className="text-primary underline-offset-[0.25em] py-2 pr-4 pl-2">
             Set Overview
           </Link>
-          <Link to="/packetizing" className="text-primary underline-offset-[0.25em] py-2 pr-4 pl-2">
+          <Link to={`${t}/packetizing`} className="text-primary underline-offset-[0.25em] py-2 pr-4 pl-2">
             Packetizing
           </Link>
-          <Link to="/set-admin" className="text-primary underline-offset-[0.25em] py-2 pr-4 pl-2">
+          <Link to={`${t}/set-admin`} className="text-primary underline-offset-[0.25em] py-2 pr-4 pl-2">
             Set Admin
           </Link>
         </ul>

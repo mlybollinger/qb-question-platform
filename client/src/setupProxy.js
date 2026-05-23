@@ -8,9 +8,7 @@ module.exports = function (app) {
       changeOrigin: true,
       on: {
         proxyReq: (proxyReq, req, res) => {
-          console.log('→ Proxying:', req.method, req.url);
-          console.log('→ Target host:', proxyReq.host);
-          console.log('→ Target path:', proxyReq.path);
+          res.setHeader('X-Proxy-Target', `${proxyReq.host}${proxyReq.path}`);
         },
         error: (err, req, res) => {
           console.error('Proxy error:', err.message);

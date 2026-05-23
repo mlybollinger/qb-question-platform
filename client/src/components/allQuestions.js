@@ -92,7 +92,7 @@ export default function AllQuestions() {
                         }
                         return (
                           <td key={q.id} className={classnames(cellBase, statusClasses[q.status])}>
-                            <span className="hover:cursor-pointer" onClick={() => navigate(`/tournament/1/editor/${q.id}`)}>{getAnswer(q)}</span>
+                            <span className="hover:cursor-pointer" onClick={() => navigate(`/tournament/${tournamentId}/editor/${q.id}`)}>{getAnswer(q)}</span>
                             <br />
                             <div className="flex justify-between items-end">
                               <button className="bg-transparent text-inherit border-none p-0 mt-1 font-inter text-[11px]">

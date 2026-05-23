@@ -3,6 +3,7 @@ import { FaChevronDown } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTournamentCategoryTree } from "../lib/api";
+import { useParams } from 'react-router';
 
 
 const statusClasses = {
@@ -46,11 +47,11 @@ function totalSlots(subcat) {
 export default function AllQuestions() {
   const [categoryTree, setCategoryTree] = useState([]);
   const [distro, setDistro] = useState([]);
-
+  const { tournamentId } = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
-    getTournamentCategoryTree(1).then(setCategoryTree).catch(console.error);
+    getTournamentCategoryTree(tournamentId).then(setCategoryTree).catch(console.error);
   }, []);
 
 

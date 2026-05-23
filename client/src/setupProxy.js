@@ -6,6 +6,7 @@ module.exports = function (app) {
     createProxyMiddleware({
       target: process.env.PROXY_URL,
       changeOrigin: true,
+      logger: console
     })
   );
 };

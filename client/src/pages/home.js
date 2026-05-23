@@ -41,7 +41,7 @@ export default function Home() {
           Quote
         </span>
       </div>
-      <div className="flex border-solid flex-col rounded-lg bg-primary-light p-8 gap-6 w-full h-2/5">
+      <div className="flex border-solid flex-col rounded-lg bg-primary-light p-8 gap-6 w-full">
         <span className="text-mono font-normal text-2xl font-mono">CURRENTLY OPEN</span>
         <span className="text-6xl">{tournament?.name}</span>
         <div class="flex gap-2 text-2xl text-ink-subtle font-normal font-mono items-center"><span>Collegiate</span><span>&bull;</span><span>{`${tournament?.numberOfPackets} packets`}</span>

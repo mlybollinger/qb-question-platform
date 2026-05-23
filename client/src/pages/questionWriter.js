@@ -7,7 +7,7 @@ import { EditorHeader } from '../components/editorHeader';
 import { MdxEditor } from '../components/mdxEditor';
 import { EditorFooter } from '../components/editorFooter';
 import { getTournamentCategories, createQuestion } from '../lib/api';
-
+import { useParams } from 'react-router-dom';
 const TABS = [
   { id: 0, name: 'Tossup' },
   { id: 1, name: 'Bonus' },
@@ -15,6 +15,7 @@ const TABS = [
 
 export default function QuestionWriter() {
   const navigate = useNavigate();
+  const { tournamentId } = useParams();
   const [text, setText] = useState('');
   const [selectedTab, setSelectedTab] = useState(0);
   const [categories, setCategories] = useState([]);
@@ -33,7 +34,7 @@ export default function QuestionWriter() {
     try {
       const question = await createQuestion({
         authorId: 1,
-        tournamentId: 1,
+        tournamentId: tournamentId,
         categoryId,
         questionType: selectedTab === 0 ? 'tossup' : 'bonus',
         rawText: questionText,

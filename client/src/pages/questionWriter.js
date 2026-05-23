@@ -34,7 +34,7 @@ export default function QuestionWriter() {
     try {
       const question = await createQuestion({
         authorId: 1,
-        tournamentId: tournamentId,
+        tournamentId: parseInt(tournamentId),
         categoryId,
         questionType: selectedTab === 0 ? 'tossup' : 'bonus',
         rawText: questionText,

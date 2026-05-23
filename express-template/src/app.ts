@@ -5,7 +5,7 @@ import questionRoutes from './routes/question.routes';
 import packetRoutes from './routes/packet.routes';
 import authRoutes from './routes/auth.routes';
 import { requireAuth } from './middleware/auth.middleware';
-import cors from 'cors';
+import * as cors from 'cors';
 
 const app = express();
 

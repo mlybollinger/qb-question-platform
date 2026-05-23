@@ -39,7 +39,7 @@ export default function QuestionWriter() {
         questionType: selectedTab === 0 ? 'tossup' : 'bonus',
         rawText: questionText,
       });
-      navigate(`/editor/${question.id}`);
+      navigate(`/tournament/${tournamentId}/editor/${question.id}`);
     } catch (err) {
       toast.error(`Error submitting question: ${err.message}`);
     }

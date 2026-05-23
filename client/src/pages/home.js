@@ -11,6 +11,11 @@ export default function Home() {
       const tournaments = await getTournaments();
       setTournament(tournaments[0]);
       const counts = await getTournamentQuestionCounts(tournaments[0]?.id);
+      for (const status of ["written", "edited", "proofread"]) {
+        if (!counts.some((data) => data.status === status)) {
+          counts.push({ status: status, _count: { _all: 0}});
+        }
+      }
       setCounts(counts);
     }
 
@@ -36,8 +41,8 @@ export default function Home() {
           Quote
         </span>
       </div>
-      <div className="flex flex-col rounded-lg border-stroke-light bg-primary-light p-8 gap-6 w-full h-2/5">
-        <span className="text-canvas font-normal text-2xl font-mono">CURRENTLY OPEN</span>
+      <div className="flex border-solid flex-col rounded-lg bg-primary-light p-8 gap-6 w-full h-2/5">
+        <span className="text-mono font-normal text-2xl font-mono">CURRENTLY OPEN</span>
         <span className="text-6xl">{tournament?.name}</span>
         <div class="flex gap-2 text-2xl text-ink-subtle font-normal font-mono items-center"><span>Collegiate</span><span>&bull;</span><span>{`${tournament?.numberOfPackets} packets`}</span>
           <span className="justify-center">&bull;</span><span>due {tournament?.dueDate ?? `unknown`} </span></div>

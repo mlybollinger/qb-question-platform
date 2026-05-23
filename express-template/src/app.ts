@@ -5,6 +5,7 @@ import questionRoutes from './routes/question.routes';
 import packetRoutes from './routes/packet.routes';
 import authRoutes from './routes/auth.routes';
 import { requireAuth } from './middleware/auth.middleware';
+import cors from 'cors';
 
 const app = express();
 
@@ -13,7 +14,9 @@ app.use((req, res, next) => {
   res.on('finish', () => console.log(`${req.method} ${req.path} ${res.statusCode}`));
   next();
 });
-
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:3000"
+}))
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tournaments', requireAuth, tournamentRoutes);

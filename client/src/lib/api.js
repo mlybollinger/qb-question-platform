@@ -32,7 +32,7 @@ export const getTournament = (id) => api.get(`/tournaments/${id}`);
 export const getTournamentCategories = (id) => api.get(`/tournaments/${id}/categories`);
 export const getTournamentCategoryTree = (id) => api.get(`/tournaments/${id}/categoryTree`);
 export const getTournamentQuestionCounts = (id) => api.get(`/tournaments/${id}/questionCounts`);
-
+export const getTournaments = () => api.get(`/tournaments/`)
 // Questions
 export const getQuestion = (id) => api.get(`/questions/${id}`);
 export const updateQuestion = (id, data) => api.put(`/questions/${id}`, data);

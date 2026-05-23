@@ -1,19 +1,31 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getTournament, getTournamentQuestionCounts } from '../lib/api';
+import { getTournament, getTournamentQuestionCounts, getTournaments } from '../lib/api';
 
 export default function Home() {
   const [tournament, setTournament] = useState(null)
   const [counts, setCounts] = useState(null);
 
   useEffect(() => {
-    getTournament(1).then(setTournament).catch(console.error);
+    const sequence = async () => {
+      const tournaments = await getTournaments();
+      setTournament(tournaments[0]);
+      const counts = await getTournamentQuestionCounts(tournaments[0]?.id);
+      setCounts(counts);
+    }
+
+    try {
+      sequence()
+    } catch (err) {
+      console.error(err)
+    }
   }, [])
 
-  useEffect(() => {
-    getTournamentQuestionCounts(1).then(setCounts).catch(console.error);
-  }, [])
 
+  // useEffect(() => {
+  //   getTournamentQuestionCounts(tournament?.id).then(setCounts).catch(console.error);
+  // }, [])
+  
     return <>
     <div class="flex flex-col p-12 gap-8 w-1/2 h-full">
       <div
@@ -41,7 +53,7 @@ export default function Home() {
         
         </div>
         <div className="flex gap-4">
-        <Link to="/tournament/1/set-overview" className="p-8 text-white text-4xl border-stroke bg-primary border-black rounded-lg shadow-md">{"Jump In ->"}</Link>
+        <Link to={`/tournament/${tournament?.id}/set-overview`} className="p-8 text-white text-4xl border-stroke bg-primary border-black rounded-lg shadow-md">{"Jump In ->"}</Link>
         <div className="p-8 text-4xl border-dashed border-black rounded-xl shadow-md">{"See Packets ->"} </div>
 
         </div>

@@ -39,23 +39,15 @@ model User {
 model Category {
   id        Int                @id @default(autoincrement())
   name      String             @unique
+  parentId Int?          
   questions Question[]
-  childRelations  CategoryRelation[] @relation("ParentCategory")
-  parentRelations CategoryRelation[] @relation("ChildCategory")
-  distributionConstraints PacketDistributionConstraints[]
+  children  Category[] @relation("ParentCategory")
+  parent Category? @relation("ParentCategory", fields: [parentId], references: [id])
+  tournamentCategories TournamentCategory[]
 
   @@map("category")
 }
 
-model CategoryRelation {
-  id               Int      @id @default(autoincrement())
-  childCategoryId  Int      @map("child_category_id")
-  parentCategoryId Int      @map("parent_category_id")
-  childCategory    Category @relation("ChildCategory", fields: [childCategoryId], references: [id])
-  parentCategory   Category @relation("ParentCategory", fields: [parentCategoryId], references: [id])
-
-  @@map("category_relation")
-}
 
 model Tournament {
   id                Int                            @id @default(autoincrement())
@@ -67,8 +59,8 @@ model Tournament {
   distribution      Json?
   questions         Question[]
   packets           Packet[]
-  distributionConstraints PacketDistributionConstraints[]
   roles             TournamentRoleAssignment[]
+  tournamentCategories TournamentCategory[]
 
   @@map("tournament")
 }
@@ -105,27 +97,35 @@ model Tossup {
 model Bonus {
   id           Int      @id @default(autoincrement())
   questionId   Int      @unique @map("question_id")
-  part1Text    String   @map("part_1_text")
-  part1Answer  String   @map("part_1_answer")
-  part2Text    String   @map("part_2_text")
-  part2Answer  String   @map("part_2_answer")
-  part3Text    String   @map("part_3_text")
-  part3Answer  String   @map("part_3_answer")
+  bonusLeadin  String?  @map("bonus_leadin")
+  parts        BonusPart[] 
   question     Question @relation(fields: [questionId], references: [id])
 
   @@map("bonus")
 }
 
-model PacketDistributionConstraints {
+model BonusPart {
+  id          Int    @id @default(autoincrement())
+  bonusId     Int    @map("bonus_id")
+  partNumber  Int    @map("part_number")
+  text        String @map("text")
+  answer      String @map("answer")
+  bonus       Bonus  @relation(fields: [bonusId], references: [id])
+
+  @@map("bonus_part")
+}
+
+model TournamentCategory {
   id           Int          @id @default(autoincrement())
   tournamentId Int          @map("tournament_id")
   categoryId   Int?         @map("category_id")
-  questionType QuestionType @map("question_type")
-  numQuestions Int          @map("num_questions")
+  numBonuses   Int?         @map("num_bonuses")
+  numTossups   Int?         @map("num_tossups")
+  displayOrder Int          @map("display_order")
   tournament   Tournament   @relation(fields: [tournamentId], references: [id])
   category     Category?    @relation(fields: [categoryId], references: [id])
-
-  @@map("packet_distribution_constraints")
+   
+  @@map("tournament_category")
 }
 
 model Packet {

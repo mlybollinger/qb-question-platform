@@ -86,17 +86,12 @@ export function validateTossupFields(fields: { questionText: string; answer: str
 }
 
 export function validateBonusFields(fields: {
-  part1Answer: string; part2Answer: string; part3Answer: string;
+  parts: { answer: string }[];
 }): ValidationErrors {
   const errors: ValidationErrors = {};
-  const fields_map: [keyof typeof fields, string][] = [
-    ['part1Answer', 'part1Answer'],
-    ['part2Answer', 'part2Answer'],
-    ['part3Answer', 'part3Answer'],
-  ];
-  for (const [key, label] of fields_map) {
-    const err = validateAnswerLine(fields[key]);
-    if (err) errors[label] = err;
+  for (const [i, part] of fields.parts.entries()) {
+    const err = validateAnswerLine(part.answer);
+    if (err) errors[`parts[${i}].answer`] = err;
   }
   return errors;
 }

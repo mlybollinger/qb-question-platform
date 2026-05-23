@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as questionService from '../services/question.service';
 import { QuestionType, QuestionStatus } from '@prisma/client';
 import { validateTossupFields, validateBonusFields, ValidationErrors } from '../lib/questionValidation';
+import { parseTossup, parseBonus } from '../lib/questionParser';
 
 function runValidation(body: any): ValidationErrors {
   if (body.tossup) {
@@ -11,13 +12,9 @@ function runValidation(body: any): ValidationErrors {
     }
   }
   if (body.bonus) {
-    const { part1Answer, part2Answer, part3Answer } = body.bonus;
-    if (part1Answer !== undefined || part2Answer !== undefined || part3Answer !== undefined) {
-      return validateBonusFields({
-        part1Answer: part1Answer ?? '',
-        part2Answer: part2Answer ?? '',
-        part3Answer: part3Answer ?? '',
-      });
+    const { parts } = body.bonus;
+    if (Array.isArray(parts) && parts.some((p: any) => p.answer !== undefined)) {
+      return validateBonusFields({ parts: parts.map((p: any) => ({ answer: p.answer ?? '' })) });
     }
   }
   return {};
@@ -41,6 +38,41 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
+  const { rawText, questionType, authorId, categoryId, tournamentId } = req.body;
+
+  if (rawText) {
+    if (!questionType) return res.status(400).json({ error: 'questionType is required when rawText is provided' });
+
+    if (questionType === 'tossup') {
+      const parsed = parseTossup(rawText);
+      if (!parsed) return res.status(400).json({ error: 'Failed to parse tossup: expected "...question text...\nANSWER: ...answer..."' });
+      try {
+        const question = await questionService.create({ authorId, categoryId, questionType, tournamentId, tossup: parsed });
+        return res.status(201).json(question);
+      } catch (err: any) {
+        return res.status(400).json({ error: err.message });
+      }
+    }
+
+    if (questionType === 'bonus') {
+      let parsed;
+      try {
+        parsed = parseBonus(rawText);
+      } catch (error: any) {
+        return res.status(400).json({error: error.message})
+      }
+      if (!parsed) return res.status(400).json({ error: 'Failed to parse bonus: expected "leadin\\n[10e/m/h] text\\nANSWER: answer" × 3' });
+      try {
+        const question = await questionService.create({ authorId, categoryId, questionType, tournamentId, bonus: parsed });
+        return res.status(201).json(question);
+      } catch (err: any) {
+        return res.status(400).json({ error: err.message });
+      }
+    }
+
+    return res.status(400).json({ error: 'questionType must be "tossup" or "bonus"' });
+  }
+
   const errors = runValidation(req.body);
   if (Object.keys(errors).length > 0) return res.status(400).json({ errors });
   try {
@@ -52,6 +84,39 @@ export const create = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
+  const { rawText, questionType, authorId, categoryId, tournamentId, status } = req.body;
+  if (rawText) {
+    if (!questionType) return res.status(400).json({ error: 'questionType is required when rawText is provided' });
+
+    if (questionType === 'tossup') {
+      const parsed = parseTossup(rawText);
+      if (!parsed) return res.status(400).json({ error: 'Failed to parse tossup: expected "...question text...\nANSWER: ...answer..."' });
+      try {
+        const question = await questionService.update(parseInt(req.params.id), { categoryId, tossup: parsed, status });
+        return res.status(201).json(question);
+      } catch (err: any) {
+        return res.status(400).json({ error: err.message });
+      }
+    }
+
+    if (questionType === 'bonus') {
+      let parsed;
+      try {
+        parsed = parseBonus(rawText);
+      } catch (error: any) {
+        return res.status(400).json({error: error.message})
+      }
+      if (!parsed) return res.status(400).json({ error: 'Failed to parse bonus: expected "leadin\\n[10e/m/h] text\\nANSWER: answer" × 3' });
+      try {
+        const question = await questionService.update(parseInt(req.params.id), { categoryId, status, bonus: parsed });
+        return res.status(201).json(question);
+      } catch (err: any) {
+        return res.status(400).json({ error: err.message });
+      }
+    }
+
+    return res.status(400).json({ error: 'questionType must be "tossup" or "bonus"' });
+  }
   const errors = runValidation(req.body);
   if (Object.keys(errors).length > 0) return res.status(400).json({ errors });
   try {
@@ -70,3 +135,4 @@ export const remove = async (req: Request, res: Response) => {
     res.status(400).json({ error: err.message });
   }
 };
+

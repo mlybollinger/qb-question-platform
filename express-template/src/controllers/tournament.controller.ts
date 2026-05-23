@@ -21,6 +21,15 @@ export const create = async (req: Request, res: Response) => {
   }
 };
 
+export const getQuestionCounts = async (req: Request, res: Response) => {
+  try {
+    const counts = await tournamentService.getQuestionCounts(parseInt(req.params.id));
+    res.status(201).json(counts);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
 export const update = async (req: Request, res: Response) => {
   try {
     const tournament = await tournamentService.update(parseInt(req.params.id), req.body);
@@ -38,3 +47,31 @@ export const remove = async (req: Request, res: Response) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+export const getCategoryTree = async (req: Request, res: Response) => {
+  try {
+    const tree = await tournamentService.assembleQuestionTree(parseInt(req.params.id));
+    res.json(tree);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+export const getCategories = async (req: Request, res: Response) => {
+  try {
+    const categories = await tournamentService.getCategories(parseInt(req.params.id));
+    res.json(categories);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+export const getDistro = async (req: Request, res: Response) => {
+  try {
+    const distro = await tournamentService.getDistro(parseInt(req.params.id));
+    res.json(distro);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message })
+  }
+  
+}

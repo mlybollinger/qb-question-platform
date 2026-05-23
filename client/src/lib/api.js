@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { getToken, clearToken } from './auth';
 
+const api_url = import.meta.env.VITE_API_URL || "localhost:3001/api"
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: api_url,
   headers: { 'Content-Type': 'application/json' },
 });
 

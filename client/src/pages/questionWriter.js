@@ -6,6 +6,7 @@ import { TabGroup } from '@/components/select/TabGroup';
 import { EditorHeader } from '../components/editorHeader';
 import { MdxEditor } from '../components/mdxEditor';
 import { EditorFooter } from '../components/editorFooter';
+import { getTournamentCategories, createQuestion } from '../lib/api';
 
 const TABS = [
   { id: 0, name: 'Tossup' },
@@ -20,9 +21,7 @@ export default function QuestionWriter() {
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   useEffect(() => {
-    fetch('/api/tournaments/1/categories')
-      .then((res) => res.json())
-      .then((cats) => setCategories(cats));
+    getTournamentCategories(1).then(setCategories).catch(console.error);
   }, []);
 
   const submitQuestion = async (rawText, categoryId) => {
@@ -31,24 +30,17 @@ export default function QuestionWriter() {
       .replace(/\\\[/g, '[')
       .replace(/\\\]/g, ']');
 
-    const res = await fetch('/api/questions/', {
-      method: 'POST',
-      body: JSON.stringify({
+    try {
+      const question = await createQuestion({
         authorId: 1,
         tournamentId: 1,
         categoryId,
         questionType: selectedTab === 0 ? 'tossup' : 'bonus',
         rawText: questionText,
-      }),
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    if (!res.ok) {
-      const body = await res.json();
-      toast.error(`Error submitting question: ${body.error}`);
-    } else {
-      const body = await res.json();
-      navigate(`/editor/${body.id}`);
+      });
+      navigate(`/editor/${question.id}`);
+    } catch (err) {
+      toast.error(`Error submitting question: ${err.message}`);
     }
   };
 

@@ -11,6 +11,8 @@ import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css'
 import Home from "./pages/home";
 import SetOverview from "./pages/setOverview";
+import Login from "./pages/login";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function NoMatch() {
   return (
@@ -50,8 +52,9 @@ function App() {
       <Router>
         <ToastContainer />
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/tournament/:tournamentId/*" element={<TournamentLayout />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/tournament/:tournamentId/*" element={<ProtectedRoute><TournamentLayout /></ProtectedRoute>} />
           <Route path="*" element={<NoMatch />} />
         </Routes>
       </Router>

@@ -135,7 +135,7 @@ async function main() {
   // ── Tournament ────────────────────────────────────────────────────────────
   const tournament = await prisma.tournament.create({
     data: {
-      name: 'Sample Tournament',
+      name: '2023 Chicago Open',
       numberOfPackets: 14,
       questionsPerPacket: 20,
       distribution: {

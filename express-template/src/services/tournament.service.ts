@@ -20,11 +20,21 @@ interface CategoryTree {
 
 
 
-export const getById = (id: number) =>
-  prisma.tournament.findUnique({
+export const getById = (id: number) => prisma.tournament.findUnique({
     where: { id },
-    include: { packets: true, roles: { include: { user: true } }, tournamentCategories: true },
-  });
+    include: { roles: { include: { user: true } }, tournamentCategories: true },
+});
+
+export const getQuestionCounts = (id: number) => prisma.question.groupBy({
+  by: ['status'],
+  where: {tournamentId: id},
+  _count: {
+    _all: true
+  }
+})
+
+
+
 
 export const create = (data: {
   name: string;
@@ -91,6 +101,7 @@ export const assembleQuestionTree = async (id: number): Promise<CategoryTree> =>
         },
         include: {
           tossup: true,
+          author: true,
           bonus: {
             include: {
               parts: true
@@ -104,7 +115,6 @@ export const assembleQuestionTree = async (id: number): Promise<CategoryTree> =>
 
   const trees = assembleTreeHelper(categories)
   const myTree = { id: "root", children: trees }
-  console.log(myTree);
   return myTree;
 }
 

@@ -21,6 +21,15 @@ export const create = async (req: Request, res: Response) => {
   }
 };
 
+export const getQuestionCounts = async (req: Request, res: Response) => {
+  try {
+    const counts = await tournamentService.getQuestionCounts(parseInt(req.params.id));
+    res.status(201).json(counts);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
 export const update = async (req: Request, res: Response) => {
   try {
     const tournament = await tournamentService.update(parseInt(req.params.id), req.body);

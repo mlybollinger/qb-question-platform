@@ -5,6 +5,7 @@ import { QuestionContext } from '../context/questionContext';
 import { EditorHeader } from '../components/editorHeader';
 import { MdxEditor } from '../components/mdxEditor';
 import { EditorFooter } from '../components/editorFooter';
+import { getQuestion, getTournamentCategories, updateQuestion } from '../lib/api';
 
 export default function QuestionEditor() {
   const { questionId } = useParams();
@@ -16,11 +17,7 @@ export default function QuestionEditor() {
   const [questionType, setQuestionType] = useState(null);
 
   useEffect(() => {
-    fetch(`/api/questions/${questionId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
+    getQuestion(questionId)
       .then((question) => {
         if (question.tossup) {
           setText(question.tossup.questionText + '\nANSWER: ' + question.tossup.answer);
@@ -47,9 +44,7 @@ export default function QuestionEditor() {
   }, [questionId]);
 
   useEffect(() => {
-    fetch('/api/tournaments/1/categories')
-      .then((res) => res.json())
-      .then((cats) => setCategories(cats));
+    getTournamentCategories(1).then(setCategories).catch(console.error);
   }, []);
 
   const handleSave = async (rawText, categoryId) => {
@@ -58,17 +53,11 @@ export default function QuestionEditor() {
       .replace(/\\\[/g, '[')
       .replace(/\\\]/g, ']');
 
-    const res = await fetch(`/api/questions/${questionId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ rawText: cleanedText, questionType, categoryId, status }),
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    if (!res.ok) {
-      const body = await res.json();
-      toast.error(`Error saving question: ${body.error}`);
-    } else {
+    try {
+      await updateQuestion(questionId, { rawText: cleanedText, questionType, categoryId, status });
       toast.success('Question saved.');
+    } catch (err) {
+      toast.error(`Error saving question: ${err.message}`);
     }
   };
 

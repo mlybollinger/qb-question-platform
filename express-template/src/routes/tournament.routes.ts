@@ -5,6 +5,7 @@ const router = Router();
 
 router.get('/', tournamentController.getAll);
 router.get('/:id', tournamentController.getById);
+router.get('/:id/questionCounts', tournamentController.getQuestionCounts);
 router.post('/', tournamentController.create);
 router.put('/:id', tournamentController.update);
 router.delete('/:id', tournamentController.remove);

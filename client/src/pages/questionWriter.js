@@ -22,7 +22,7 @@ export default function QuestionWriter() {
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   useEffect(() => {
-    getTournamentCategories(1).then(setCategories).catch(console.error);
+    getTournamentCategories(tournamentId).then(setCategories).catch(console.error);
   }, []);
 
   const submitQuestion = async (rawText, categoryId) => {

@@ -8,10 +8,10 @@ import { EditorFooter } from '../components/editorFooter';
 import { getQuestion, getTournamentCategories, updateQuestion } from '../lib/api';
 
 export default function QuestionEditor() {
-  const { questionId } = useParams();
+  const { questionId, tournamentId} = useParams();
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([]); 
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [status, setStatus] = useState(null);
   const [questionType, setQuestionType] = useState(null);
@@ -44,7 +44,7 @@ export default function QuestionEditor() {
   }, [questionId]);
 
   useEffect(() => {
-    getTournamentCategories(1).then(setCategories).catch(console.error);
+    getTournamentCategories(tournamentId).then(setCategories).catch(console.error);
   }, []);
 
   const handleSave = async (rawText, categoryId) => {

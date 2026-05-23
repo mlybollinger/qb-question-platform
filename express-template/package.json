@@ -9,9 +9,10 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
-    "full:up": "npm install && npx prisma generate && npx prisma migrate deploy && npx tsc && npx prisma db seed",
     "db:up": "docker run --name qb_pg -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=qb_platform -p 5432:5432 -d postgres:16",
-    "db:down": "docker stop qb_pg && docker rm qb_pg"
+    "db:down": "docker stop qb_pg && docker rm qb_pg",
+    "full:up": "npm install && db:up && npx prisma generate && npx prisma migrate deploy && npx tsc && npx prisma db seed"
+
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",

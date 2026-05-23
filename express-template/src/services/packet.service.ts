@@ -30,11 +30,11 @@ export const remove = (id: number) => prisma.packet.delete({ where: { id } });
 export const packetize = async (packetId: number) => {
   const packet = await prisma.packet.findUniqueOrThrow({
     where: { id: packetId },
-    include: { tournament: { include: { distributionConstraints: true } } },
+    include: { tournament: { include: { tournamentCategories: true } } },
   });
 
   const tournament = packet.tournament;
-  const constraints = tournament.distributionConstraints;
+  const constraints = tournament.tournamentCategories;
 
   // Gather already-assigned question IDs across all packets in this tournament
   const existingAssignments = await prisma.packetQuestion.findMany({
@@ -47,32 +47,32 @@ export const packetize = async (packetId: number) => {
   await prisma.packetQuestion.deleteMany({ where: { packetId } });
 
   const created = [];
-  for (const constraint of constraints) {
-    const questions = await prisma.question.findMany({
-      where: {
-        tournamentId: tournament.id,
-        questionType: constraint.questionType,
-        id: { notIn: Array.from(assignedIds) },
-        status: { in: ['written', 'edited', 'proofread'] },
-      },
-      take: constraint.numQuestions,
-    });
+  // for (const constraint of constraints) {
+  //   const questions = await prisma.question.findMany({
+  //     where: {
+  //       tournamentId: tournament.id,
+  //       questionType: constraint.questionType,
+  //       id: { notIn: Array.from(assignedIds) },
+  //       status: { in: ['written', 'edited', 'proofread'] },
+  //     },
+  //     take: constraint.numTossups,
+  //   });
 
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      assignedIds.add(q.id);
-      created.push(
-        await prisma.packetQuestion.create({
-          data: {
-            packetId,
-            questionId: q.id,
-            questionType: q.questionType as QuestionType,
-            questionNumber: i + 1,
-          },
-        })
-      );
-    }
-  }
+  //   for (let i = 0; i < questions.length; i++) {
+  //     const q = questions[i];
+  //     assignedIds.add(q.id);
+  //     created.push(
+  //       await prisma.packetQuestion.create({
+  //         data: {
+  //           packetId,
+  //           questionId: q.id,
+  //           questionType: q.questionType as QuestionType,
+  //           questionNumber: i + 1,
+  //         },
+  //       })
+  //     );
+  //   }
+  // }
 
   return prisma.packet.findUnique({
     where: { id: packetId },

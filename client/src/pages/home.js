@@ -32,7 +32,7 @@ export default function Home() {
   // }, [])
   
     return <>
-    <div class="flex flex-col p-12 gap-8 w-3/4 h-full">
+    <div class="flex flex-col p-12 gap-8 w-full items-center h-full">
       <div
         className="font-heading font-normal text-[3em] text-left bg-white py-1"
         style={{ fontVariationSettings: "'SHRP' 50" }}
@@ -41,33 +41,33 @@ export default function Home() {
           Quote
         </span>
       </div>
-      <div className="flex border-solid flex-col rounded-lg bg-primary-light p-8 gap-5 w-full">
-        <span className="text-mono text-ink-subtle-dark font-normal text-2xl font-mono">CURRENTLY OPEN</span>
-        <span className="text-6xl">{tournament?.name}</span>
-        <div class="flex gap-2 text-2xl text-ink-subtle-dark font-normal font-mono items-center"><span>Collegiate</span><span>&bull;</span><span>{`${tournament?.numberOfPackets} packets`}</span>
-          <span className="justify-center">&bull;</span><span>due {tournament?.dueDate ?? `unknown`} </span></div>
-          <div className="flex flex-col gap-2 text-ink-subtle-dark">
-        Your Other Tournaments
+      <div className="flex flex-col w-1/2 gap-8 items-start">
+        <div className="flex w-full border-solid flex-col rounded-lg bg-primary-light p-8 gap-5">
+          <span className="text-mono text-ink-subtle-dark font-normal text-2xl font-mono">CURRENTLY OPEN</span>
+          <span className="text-6xl">{tournament?.name}</span>
+          <div class="flex gap-2 text-2xl text-ink-subtle-dark font-normal font-mono items-center"><span>Collegiate</span><span>&bull;</span><span>{`${tournament?.numberOfPackets} packets`}</span>
+            <span className="justify-center">&bull;</span><span>due {tournament?.dueDate ?? `unknown`} </span></div>
+            
+            <div className="flex gap-6">
+
+            {counts?.map((data) => (
+              <div className="flex w-full flex-col p-8 gap-2 border-stroke bg-white rounded-xl">
+              <span className="text-2xl font-mono text-ink-subtle-dark">{data?.status}</span><span className="text-4xl">{data?._count?._all}</span>
+            </div>))}
+          
           </div>
-          <div className="flex gap-6">
+          <div className="flex gap-4">
+          <Link to={`/tournament/${tournament?.id}/set-overview`} className="p-8 text-white text-4xl border-stroke bg-primary border-black rounded-lg shadow-md">{"Jump In ->"}</Link>
+          <div className="p-8 text-4xl border-dashed border-black rounded-xl shadow-md">{"See Packets ->"} </div>
 
-          {counts?.map((data) => (
-            <div className="flex w-full flex-col p-8 gap-2 border-stroke bg-white rounded-xl">
-            <span className="text-2xl font-mono text-ink-subtle-dark">{data?.status}</span><span className="text-4xl">{data?._count?._all}</span>
-          </div>))}
-        
+          </div>
         </div>
-        <div className="flex gap-4">
-        <Link to={`/tournament/${tournament?.id}/set-overview`} className="p-8 text-white text-4xl border-stroke bg-primary border-black rounded-lg shadow-md">{"Jump In ->"}</Link>
-        <div className="p-8 text-4xl border-dashed border-black rounded-xl shadow-md">{"See Packets ->"} </div>
-
+        Your Other Tournaments
+        <div className="flex w-full">
+        <div className="flex flex-col p-8 border-dashed w-1/5 items-center justify-center text-2xl rounded-lg">
+        <span>+ new</span>
+        <span className="font-mono text-ink-subtle-dark">0 archived</span></div>
         </div>
-      </div>
-      Your Other Tournaments
-      <div className="flex w-3/5">
-      <div className="flex flex-col p-8 border-dashed w-1/5 items-center justify-center text-2xl rounded-lg">
-      <span>+ new</span>
-      <span className="font-mono text-ink-subtle-dark">0 archived</span></div>
       </div>
     </div>
   </>; 

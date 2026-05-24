@@ -32,7 +32,7 @@ export default function Home() {
   // }, [])
   
     return <>
-    <div class="flex flex-col p-12 gap-8 w-1/2 h-full">
+    <div class="flex flex-col p-12 gap-8 w-3/4 h-full">
       <div
         className="font-heading font-normal text-[3em] text-left bg-white py-1"
         style={{ fontVariationSettings: "'SHRP' 50" }}
@@ -41,19 +41,19 @@ export default function Home() {
           Quote
         </span>
       </div>
-      <div className="flex border-solid flex-col rounded-lg bg-primary-light p-8 gap-6 w-full">
-        <span className="text-mono font-normal text-2xl font-mono">CURRENTLY OPEN</span>
+      <div className="flex border-solid flex-col rounded-lg bg-primary-light p-8 gap-5 w-full">
+        <span className="text-mono text-ink-subtle-dark font-normal text-2xl font-mono">CURRENTLY OPEN</span>
         <span className="text-6xl">{tournament?.name}</span>
-        <div class="flex gap-2 text-2xl text-ink-subtle font-normal font-mono items-center"><span>Collegiate</span><span>&bull;</span><span>{`${tournament?.numberOfPackets} packets`}</span>
+        <div class="flex gap-2 text-2xl text-ink-subtle-dark font-normal font-mono items-center"><span>Collegiate</span><span>&bull;</span><span>{`${tournament?.numberOfPackets} packets`}</span>
           <span className="justify-center">&bull;</span><span>due {tournament?.dueDate ?? `unknown`} </span></div>
-          <div className="flex flex-col gap-2 text-ink-subtle">
+          <div className="flex flex-col gap-2 text-ink-subtle-dark">
         Your Other Tournaments
           </div>
           <div className="flex gap-6">
 
           {counts?.map((data) => (
             <div className="flex w-full flex-col p-8 gap-2 border-stroke bg-white rounded-xl">
-            <span className="text-2xl font-mono text-ink-subtle">{data?.status}</span><span className="text-4xl">{data?._count?._all}</span>
+            <span className="text-2xl font-mono text-ink-subtle-dark">{data?.status}</span><span className="text-4xl">{data?._count?._all}</span>
           </div>))}
         
         </div>
@@ -67,7 +67,7 @@ export default function Home() {
       <div className="flex w-3/5">
       <div className="flex flex-col p-8 border-dashed w-1/5 items-center justify-center text-2xl rounded-lg">
       <span>+ new</span>
-      <span className="font-mono text-ink-subtle">0 archived</span></div>
+      <span className="font-mono text-ink-subtle-dark">0 archived</span></div>
       </div>
     </div>
   </>; 

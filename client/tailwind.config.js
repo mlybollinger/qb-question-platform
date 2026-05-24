@@ -13,6 +13,7 @@ module.exports = {
         "primary-light": "var(--light-color)",
         ink: "var(--text-color)",
         "ink-subtle": "var(--subtitle-color)",
+        "ink-subtle-dark": "var(--subtitle-color-dark)",
         "ink-faint": "var(--light-font-color)",
         stroke: "var(--line-color)",
         "stroke-light": "var(--light-line-color)",

@@ -60,12 +60,12 @@ export default function AllQuestions() {
     <div>
       <h2>All Questions</h2>
       <div className="flex max-w-[1750px] overflow-x-auto">
-        <table className="table-auto">
+        <table className="table-auto border-collapse">
           <tbody>
             {categoryTree.children?.map((cat) => (
               <>
                 <tr key={`${cat.name}-${cat.id}`}>
-                  <td className="font-bold border-b-2 border-stroke mt-3" colSpan={100}>
+                  <td className="font-bold border-2 border-t-2 border-stroke mt-3" colSpan={100}>
                     {cat.name}
                   </td>
                 </tr>

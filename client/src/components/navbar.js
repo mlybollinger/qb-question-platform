@@ -7,7 +7,7 @@ export default function Navbar() {
   const { tournamentId } = useParams();
   const t = `/tournament/${tournamentId}`;
   return (
-    <nav className="flex flex-col bg-transparent flex-1 max-w-[300px] min-w-[200px] border-0 border-r border-solid border-stroke">
+    <nav className="flex flex-col bg-transparent w-[200px] min-w-[200px] border-0 border-r border-solid border-stroke">
       <div
         className="font-heading font-normal text-[3em] text-center bg-white py-1 border-0 border-b border-solid border-stroke"
         style={{ fontVariationSettings: "'SHRP' 50" }}

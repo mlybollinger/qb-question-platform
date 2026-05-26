@@ -6,6 +6,7 @@ export default function Home() {
   const [tournament, setTournament] = useState(null)
   const [counts, setCounts] = useState(null);
 
+  
   useEffect(() => {
     const sequence = async () => {
       const tournaments = await getTournaments();

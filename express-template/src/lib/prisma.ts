@@ -18,7 +18,8 @@ const prisma = new PrismaClient().$extends({
       mainAnswer: {
         needs: { answer: true },
         compute(bonusPart) {
-          return bonusPart.answer.split('[')[0]
+          //excise anything inside brackets or parentheses
+          return bonusPart.answer.replace(/(\[.*\]|\(.*\))/g, "")
         }
       }
     }

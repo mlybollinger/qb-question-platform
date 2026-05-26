@@ -101,7 +101,14 @@ export const assembleQuestionTree = async (id: number): Promise<CategoryTree> =>
         },
         include: {
           tossup: true,
-          author: true,
+          author: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              username: true
+            }
+          },
           bonus: {
             include: {
               parts: true

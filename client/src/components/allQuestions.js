@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTournamentCategoryTree } from "../lib/api";
 import { useParams } from 'react-router';
-
+import QuestionRow from "./questionRow";
 
 const statusClasses = {
   unclaimed: "text-gray-500",
@@ -46,7 +46,6 @@ function totalSlots(subcat) {
 
 export default function AllQuestions() {
   const [categoryTree, setCategoryTree] = useState([]);
-  const [distro, setDistro] = useState([]);
   const { tournamentId } = useParams();
   const navigate = useNavigate();
 
@@ -60,8 +59,8 @@ export default function AllQuestions() {
   return (
     <div>
       <h2>All Questions</h2>
-      <div style={{ overflowX: "auto" }}>
-        <table>
+      <div className="flex max-w-[1750px] overflow-x-auto">
+        <table className="table-auto">
           <tbody>
             {categoryTree.children?.map((cat) => (
               <>
@@ -72,39 +71,18 @@ export default function AllQuestions() {
                 </tr>
                 {(cat.children?.length ? cat.children : [cat]).map((subcat) => {
                   const slots = totalSlots(subcat);
-                  const questions = subcat.questions || [];
-                  return (
-                    <tr key={`${subcat.name}-${subcat.id}`} className="flex">
-                      <td className="bg-[whitesmoke] w-[70px]">{cat.children?.length ? subcat.name : ""}</td>
-                      {Array.from({ length: slots }, (_, i) => {
-                        const q = questions[i];
-                        if (!q) {
-                          return (
-                            <td className={classnames(cellBase, statusClasses.unclaimed)}>
-                              {""}
-                              <br />
-                              <button className="bg-transparent text-inherit border-none p-0 mt-1 font-inter text-[11px]">
-                                unclaimed
-                                <FaChevronDown className="ml-1" />
-                              </button>
-                            </td>
-                          );
-                        }
-                        return (
-                          <td key={q.id} className={classnames(cellBase, statusClasses[q.status])}>
-                            <span className="hover:cursor-pointer" onClick={() => navigate(`/tournament/${tournamentId}/editor/${q.id}`)}>{getAnswer(q)}</span>
-                            <br />
-                            <div className="flex justify-between items-end">
-                              <button className="bg-transparent text-inherit border-none p-0 mt-1 font-inter text-[11px]">
-                                {q.status}
-                                <FaChevronDown className="ml-1" />
-                              </button>
-                              <span>{getAuthorName(q) ? `<${getAuthorName(q)}>` : ""}</span>
-                            </div>
-                          </td>
-                        );
-                      })}
+                  const tossups = subcat.questions?.filter((question) => question.tossup) || [];
+                  const bonuses = subcat.questions?.filter((question) => question.bonus) || [];
+                  return (<>
+                    <tr key={`${subcat.name}-${subcat.id}`} className="table-row">
+                      <th rowspan="2" className="bg-[whitesmoke] w-[70px]">{cat.children?.length ? subcat.name : ""}</th>
+                      <QuestionRow slots={slots / 2} questions={tossups} tournamentId={tournamentId}></QuestionRow>
                     </tr>
+                    <tr className="table-row"> 
+                    <QuestionRow slots={slots / 2} questions={bonuses} tournamentId={tournamentId}></QuestionRow>
+                    </tr>
+                    
+                   </>
                   );
                 })}
               </>
